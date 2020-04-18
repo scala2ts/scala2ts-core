@@ -7,18 +7,18 @@ import ReleaseTransformations._
 lazy val root = project.in(file("."))
   .settings(
     name := "scala2ts",
-    organization := "com.github.halfmatthalfcat",
-    version := "0.0.1",
+    organization := "com.github.scala2ts",
     scalaVersion := "2.13.1",
-    sbtPlugin := true,
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
-      scalaVersion.value,
-      "2.12.10"
+      "2.11.12",
+      "2.12.11",
+      scalaVersion.value
     ),
     libraryDependencies ++= Seq(
-      "cz.habarta.typescript-generator" %  "typescript-generator-core"  % "2.21.588",
-      "com.beachape"                    %% "enumeratum"                 % "1.5.15"
+      "org.scala-lang"        %   "scala-compiler"  % scalaVersion.value,
+      "org.scala-lang"        %   "scala-reflect"   % scalaVersion.value,
+      "org.scalatra.scalate"  %%  "scalate-core"    % "1.9.5"
     ),
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
@@ -36,7 +36,7 @@ lazy val root = project.in(file("."))
       pushChanges
     ),
     pomExtra :=
-      <url>https://www.github.com/halfmatthalfcat/scala2ts</url>
+      <url>https://www.github.com/scala2ts/scala2ts-core</url>
         <licenses>
           <license>
             <name>MIT</name>
@@ -44,8 +44,8 @@ lazy val root = project.in(file("."))
           </license>
         </licenses>
         <scm>
-          <url>git@github.com:halfmatthalfcat/scala2ts.git</url>
-          <connection>scm:git:git@github.com:halfmatthalfcat/scala2ts.git</connection>
+          <url>git@github.com:scala2ts/scala2ts-core.git</url>
+          <connection>scm:git:git@github.com:scala2ts/scala2ts-core.git</connection>
         </scm>
         <developers>
           <developer>
@@ -56,5 +56,5 @@ lazy val root = project.in(file("."))
         </developers>,
     publishMavenStyle := true,
     publishTo := sonatypePublishToBundle.value,
-    resolvers ++= Seq(DefaultMavenRepository),
+    resolvers ++= Seq(DefaultMavenRepository)
   )

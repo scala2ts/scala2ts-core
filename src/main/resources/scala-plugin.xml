@@ -1,0 +1,4 @@
+<plugin>
+  <name>scala2ts</name>
+  <classname>com.github.scala2ts.Scala2TS</classname>
+</plugin>

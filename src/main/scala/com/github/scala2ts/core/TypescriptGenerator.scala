@@ -8,13 +8,18 @@ object TypescriptGenerator {
 
   def generate(universe: Universe)(
     config: Configuration,
-    types: List[universe.Type],
+    types: List[universe.Type]
   ): Unit = {
     val parser = new ScalaParser[universe.type](universe)
-    val parsedTypes = parser.parseTypes(types)
+    val transpiler = new Transpiler(config)
 
-    System.out.println(String.format("PARSED TYPES:\n%s",
-      parsedTypes.mkString("\n")
+    val parsedTypes = parser.parseTypes(types)
+    val typescript = transpiler(parsedTypes)
+
+    System.out.println(String.format(
+      "FOUND TYPES: \n%s\nTYPESCRIPT: \n%s\n",
+      parsedTypes.mkString("\n"),
+      typescript.mkString("\n")
     ))
   }
 

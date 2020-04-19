@@ -1,8 +1,8 @@
-package com.github.scala2ts.core
+package com.github.scala2ts.model
 
 import scala.collection.immutable.ListSet
 
-object ScalaModel {
+object Scala {
   sealed trait TypeDef {
     def name: String
   }
@@ -34,6 +34,8 @@ object ScalaModel {
   case class MapRef(keyType: TypeRef, valueType: TypeRef) extends TypeRef
 
   case class CaseClassRef(name: String, typeArgs: ListSet[TypeRef]) extends TypeRef
+
+  case class SeqRef(innerType: TypeRef) extends TypeRef
 
   case class ListSetRef(innerType: TypeRef) extends TypeRef
 

@@ -6,20 +6,8 @@ import scala.reflect.api.Universe
 final class ScalaParser[U <: Universe](
   universe: U
 ) {
-  import universe.{
-    ClassSymbol,
-    MethodSymbol,
-    ModuleSymbol,
-    NoSymbol,
-    NullaryMethodType,
-    SingleTypeApi,
-    Symbol,
-    Type,
-    TypeRef,
-    typeOf
-  }
-
-  import ScalaModel.{ TypeRef => ScalaTypeRef, _ }
+  import com.github.scala2ts.model.Scala.{TypeRef => ScalaTypeRef, _}
+  import universe.{ClassSymbol, MethodSymbol, ModuleSymbol, NoSymbol, NullaryMethodType, SingleTypeApi, Symbol, Type, TypeRef, typeOf}
 
   def parseTypes(types: List[Type]): ListSet[TypeDef] =
     parse(types, ListSet.empty[Type], ListSet.empty[TypeDef])
@@ -31,7 +19,8 @@ final class ScalaParser[U <: Universe](
     case _ if (tpe.getClass.getName contains "ModuleType" /*Workaround*/ ) =>
       parseObject(tpe)
 
-    case _ if tpe.typeSymbol.isClass => {
+    case _ if tpe.typeSymbol.isClass =>
+      System.out.println("Got class " + tpe.getClass)
       val classSym = tpe.typeSymbol.asClass
 
       if (classSym.isTrait && classSym.isSealed && tpe.typeParams.isEmpty) {
@@ -41,7 +30,6 @@ final class ScalaParser[U <: Universe](
       } else {
         Option.empty[TypeDef]
       }
-    }
 
     case _ =>
       // logger.warning(s"Unsupported Scala type: $tpe")
@@ -141,7 +129,8 @@ final class ScalaParser[U <: Universe](
     examined: ListSet[Type],
     parsed: ListSet[TypeDef]
   ): ListSet[TypeDef] = types match {
-    case scalaType :: tail => {
+    case scalaType :: tail =>
+      System.out.println("Parsing type " + scalaType.toString)
       if (
         !examined.contains(scalaType) &&
         !scalaType.typeSymbol.isParameter
@@ -177,7 +166,6 @@ final class ScalaParser[U <: Universe](
           parsed ++ parseType(scalaType)
         )
       }
-    }
 
     case _ => parsed
   }

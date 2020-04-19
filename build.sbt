@@ -1,16 +1,17 @@
 /**
- * scala2ts SBT build script
+ * scala2ts-core SBT build script
  */
 
 import ReleaseTransformations._
 
 lazy val root = project.in(file("."))
   .settings(
-    name := "scala2ts",
+    name := "scala2ts-core",
     organization := "com.github.scala2ts",
     scalaVersion := "2.13.1",
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
+      // "2.10.7",
       "2.11.12",
       "2.12.11",
       scalaVersion.value
@@ -18,7 +19,10 @@ lazy val root = project.in(file("."))
     libraryDependencies ++= Seq(
       "org.scala-lang"        %   "scala-compiler"  % scalaVersion.value,
       "org.scala-lang"        %   "scala-reflect"   % scalaVersion.value,
-      "org.scalatra.scalate"  %%  "scalate-core"    % "1.9.5"
+      "org.scalatra.scalate"  %%  "scalate-core"    % (scalaBinaryVersion.value match {
+        case "2.10" => "1.8.0"
+        case _ => "1.9.5"
+      })
     ),
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](

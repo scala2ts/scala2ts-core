@@ -9,11 +9,17 @@ object Typescript {
 
   case class CustomTypeRef(
     name: String,
-    typeArgs: ListSet[TypeRef]) extends TypeRef
+    typeArgs: ListSet[TypeRef]
+  ) extends TypeRef
 
   case class ArrayRef(innerType: TypeRef) extends TypeRef
 
-  case class InterfaceDeclaration(name: String, fields: ListSet[Member], typeParams: ListSet[String], superInterface: Option[InterfaceDeclaration]) extends Declaration
+  case class InterfaceDeclaration(
+    name: String,
+    fields: ListSet[Member],
+    typeParams: ListSet[String],
+    superInterface: Option[InterfaceDeclaration]
+  ) extends Declaration
   // TODO: Support mapping of typeParams with superInterface
 
   case class Member(name: String, typeRef: TypeRef)
@@ -23,24 +29,28 @@ object Typescript {
     constructor: ClassConstructor,
     values: ListSet[Member],
     typeParams: ListSet[String],
-    superInterface: Option[InterfaceDeclaration]) extends Declaration
+    superInterface: Option[InterfaceDeclaration]
+  ) extends Declaration
 
   case class SingletonDeclaration(
     name: String,
     values: ListSet[Member],
-    superInterface: Option[InterfaceDeclaration]) extends Declaration
+    superInterface: Option[InterfaceDeclaration]
+  ) extends Declaration
 
   case class UnionDeclaration(
     name: String,
     fields: ListSet[Member],
     possibilities: ListSet[CustomTypeRef],
-    superInterface: Option[InterfaceDeclaration]) extends Declaration
+    superInterface: Option[InterfaceDeclaration]
+  ) extends Declaration
 
   case class ClassConstructor(parameters: ListSet[ClassConstructorParameter])
 
   case class ClassConstructorParameter(
     name: String,
-    typeRef: TypeRef)
+    typeRef: TypeRef
+  )
 
   case class UnknownTypeRef(name: String) extends TypeRef
 

@@ -11,19 +11,40 @@ lazy val root = project.in(file("."))
     scalaVersion := "2.13.1",
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
-      // "2.10.7",
+      // TODO: "2.10.7"
       "2.11.12",
       "2.12.11",
       scalaVersion.value
     ),
     libraryDependencies ++= Seq(
-      "org.scala-lang"        %   "scala-compiler"  % scalaVersion.value,
-      "org.scala-lang"        %   "scala-reflect"   % scalaVersion.value,
-      "org.scalatra.scalate"  %%  "scalate-core"    % (scalaBinaryVersion.value match {
+      "org.scala-lang"        %  "scala-compiler" % scalaVersion.value % "provided",
+      "org.scala-lang"        %  "scala-reflect"  % scalaVersion.value % "provided",
+      "org.scalatra.scalate"  %% "scalate-core"   % (scalaBinaryVersion.value match {
         case "2.10" => "1.8.0"
         case _ => "1.9.5"
       })
     ),
+    test in assembly := {},
+    assemblyOption in assembly :=
+      (assemblyOption in assembly).value.copy(includeScala = true),
+    // Ironically enough, scalate depends on scala-parser-combinators and
+    // scala-xml, however those _arent_ supplied to compiler plugins, so we
+    // need those bundled and not library,reflect,compiler here
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
+      cp filter { dep =>
+        dep.data.getName.contains("scala-library") ||
+        dep.data.getName.contains("scala-reflect") ||
+        dep.data.getName.contains("scala-compiler")
+      }
+    },
+    /**
+     * There's some classpath particularities when executing compiler plugins
+     * so we need to make a fatjar
+     * @see https://www.scala-lang.org/old/node/6664.html
+     * @see https://github.com/sbt/sbt/issues/2255
+     */
+    packageBin in Compile := (assembly in Compile).value,
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,

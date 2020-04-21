@@ -1,0 +1,3 @@
+<%-- Typescript Interface --%>
+<%@ val interface: com.github.scala2ts.model.Typescript.InterfaceDeclaration %>
+export interface ${interface.name}

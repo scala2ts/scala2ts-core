@@ -23,11 +23,7 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
   override def processOptions(
     options: List[String],
     error: String => Unit
-  ): Unit = {
-    config = config.fromCompilerOptions(options)
-
-    global.inform(s"$config")
-  }
+  ): Unit = { config = config.fromCompilerOptions(options) }
 
   private object Component extends PluginComponent {
     val global: Scala2TS.this.global.type = Scala2TS.this.global
@@ -59,9 +55,7 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
       private def includesFile(file: File): Boolean = {
         val path: String = file.getAbsolutePath
 
-        if (config.files.include.isEmpty && config.files.exclude.isEmpty) {
-          true
-        } else if (!matches(path, config.files.include)) {
+        if (!matches(path, config.files.include)) {
           false
         } else {
           !matches(path, config.files.exclude)
@@ -100,8 +94,6 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
       private def handle(unit: CompilationUnit): Unit = {
         val types: List[Type] =  unit.body.children.flatMap { tree: Tree =>
           val sym: Symbol = tree.symbol
-
-          System.out.println("Handling unit " + sym.fullName)
 
           if (sym.isModule && !sym.hasPackageFlag) {
             if (includesType(sym)) {

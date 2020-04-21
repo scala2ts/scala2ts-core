@@ -1,0 +1,5 @@
+<%-- Top-Of-File Comment Block --%>
+/**
+ * Scala2TS-generated Typescript Definitions
+ * Created at ${java.time.OffsetDateTime.now().toString}
+ */

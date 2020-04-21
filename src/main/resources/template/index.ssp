@@ -1,0 +1,12 @@
+<%-- Main Declaration File --%>
+${include("headline.ssp")}
+<%-- TODO: How to import the types below better --%>
+<%@ val config: com.github.scala2ts.configuration.Configuration %>
+<%@ val types: scala.collection.immutable.ListSet[com.github.scala2ts.model.Typescript.Declaration] %>
+#for (decl <- types)
+  #match(decl)
+    #case(interface: com.github.scala2ts.model.Typescript.InterfaceDeclaration)
+      <% render("interface.ssp", Map("interface" -> interface, "config" -> config)) %>
+    #otherwise
+  #end
+#end

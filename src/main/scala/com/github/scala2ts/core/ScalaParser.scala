@@ -20,7 +20,6 @@ final class ScalaParser[U <: Universe](
       parseObject(tpe)
 
     case _ if tpe.typeSymbol.isClass =>
-      System.out.println("Got class " + tpe.getClass)
       val classSym = tpe.typeSymbol.asClass
 
       if (classSym.isTrait && classSym.isSealed && tpe.typeParams.isEmpty) {
@@ -130,7 +129,6 @@ final class ScalaParser[U <: Universe](
     parsed: ListSet[TypeDef]
   ): ListSet[TypeDef] = types match {
     case scalaType :: tail =>
-      System.out.println("Parsing type " + scalaType.toString)
       if (
         !examined.contains(scalaType) &&
         !scalaType.typeSymbol.isParameter

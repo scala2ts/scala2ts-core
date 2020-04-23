@@ -86,6 +86,8 @@ object Typescript {
     override def toString = name
   }
 
+  case class OptionRef(typeRef: TypeRef) extends TypeRef
+
   case class UnionType(possibilities: ListSet[TypeRef]) extends TypeRef
 
   case class MapType(keyType: TypeRef, valueType: TypeRef) extends TypeRef

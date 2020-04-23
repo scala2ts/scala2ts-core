@@ -1,15 +1,11 @@
 package com.github.scala2ts.core
 
-import java.io.File
-import java.net.{URI, URL}
-
 import com.github.scala2ts.configuration.Configuration
 import com.github.scala2ts.model.Typescript.Declaration
 import org.fusesource.scalate.{TemplateEngine, TemplateException}
 import org.fusesource.scalate.util.{FileResourceLoader, Resource}
 
 import scala.collection.immutable.ListSet
-import scala.io.{BufferedSource, Source}
 
 class Renderer(
   config: Configuration,

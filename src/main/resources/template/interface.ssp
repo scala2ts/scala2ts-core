@@ -1,3 +1,8 @@
-<%-- Typescript Interface --%>
+<%-- Typescript Interface Template --%>
+<%@ val config: com.github.scala2ts.configuration.Configuration %>
 <%@ val interface: com.github.scala2ts.model.Typescript.InterfaceDeclaration %>
-export interface ${interface.name}
+export interface ${interface.name} {
+  #for(field <- interface.fields)
+  ${unescape(capture(render("field.ssp", Map("config" -> config, "member" -> field))).trim)}
+  #end
+}

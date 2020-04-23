@@ -1,0 +1,11 @@
+<%-- Typescript Type Template --%>
+<%@ val config: com.github.scala2ts.configuration.Configuration %>
+<%@ val tpe: com.github.scala2ts.model.Typescript.TypeRef %>
+#match(tpe)
+#case(arr: com.github.scala2ts.model.Typescript.ArrayRef)
+Array<${unescape(capture(render("type.ssp", Map("tpe" -> arr.innerType))).trim)}>
+#case(option: com.github.scala2ts.model.Typescript.OptionRef)
+${unescape(capture(render("type.ssp", Map("tpe" -> option.typeRef))).trim)} | null
+#otherwise
+${tpe.toString.trim}
+#end

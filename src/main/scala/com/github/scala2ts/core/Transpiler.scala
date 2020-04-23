@@ -136,17 +136,8 @@ final class Transpiler(config: Configuration) {
     case Scala.TypeParamRef(name) =>
       Typescript.SimpleTypeRef(name)
 
-    case Scala.OptionRef(innerType) if (
-      config.optionToNullable && config.optionToUndefined) =>
-      Typescript.UnionType(ListSet(
-        Typescript.UnionType(ListSet(
-          transpileTypeRef(innerType, inInterfaceContext), NullRef)),
-        UndefinedRef))
-
-    case Scala.OptionRef(innerType) if config.optionToNullable =>
-      Typescript.UnionType(ListSet(
-        transpileTypeRef(innerType, inInterfaceContext),
-        NullRef))
+    case Scala.OptionRef(innerType) =>
+      Typescript.OptionRef(transpileTypeRef(innerType, inInterfaceContext))
 
     case Scala.MapRef(kT, vT) => Typescript.MapType(
       transpileTypeRef(kT, inInterfaceContext),
@@ -156,11 +147,6 @@ final class Transpiler(config: Configuration) {
       Typescript.UnionType(possibilities.map { i =>
         transpileTypeRef(i, inInterfaceContext)
       })
-
-    case Scala.OptionRef(innerType) if config.optionToUndefined =>
-      Typescript.UnionType(ListSet(
-        transpileTypeRef(innerType, inInterfaceContext),
-        UndefinedRef))
 
     case Scala.UnknownTypeRef(_) =>
       Typescript.StringRef

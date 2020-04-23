@@ -181,9 +181,9 @@ final class ScalaParser[U <: Universe](
         BooleanRef
       case "String" =>
         StringRef
-      case "List" | "ListSet" | "Set" => // TODO: Traversable
+      case "List" | "ListSet" | "Set" | "Seq" =>
         val innerType = scalaType.asInstanceOf[TypeRef].args.head
-        ListSetRef(scalaTypeRef(innerType, typeParams))
+        SeqRef(scalaTypeRef(innerType, typeParams))
       case "Option" =>
         val innerType = scalaType.asInstanceOf[TypeRef].args.head
         OptionRef(scalaTypeRef(innerType, typeParams))

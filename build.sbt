@@ -5,6 +5,7 @@
 import ReleaseTransformations._
 
 lazy val root = project.in(file("."))
+  .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "scala2ts-core",
     organization := "com.github.scala2ts",
@@ -24,6 +25,8 @@ lazy val root = project.in(file("."))
         case _ => "1.9.5"
       })
     ),
+    buildInfoKeys := Seq(name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "com.github.scala2ts",
     test in assembly := {},
     assemblyOption in assembly :=
       (assemblyOption in assembly).value.copy(includeScala = true),

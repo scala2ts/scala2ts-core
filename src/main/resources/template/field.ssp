@@ -1,0 +1,11 @@
+<%-- Typescript Interface/Class Field Template --%>
+<%@ val config: com.github.scala2ts.configuration.Configuration %>
+<%@ val member: com.github.scala2ts.model.Typescript.Member %>
+#match(member.typeRef)
+  #case(option: com.github.scala2ts.model.Typescript.OptionRef)
+    ${member.name}?: ${unescape(capture(render("type.ssp", Map("tpe" -> option.typeRef, "config" -> config))).trim)};
+  #case(arr: com.github.scala2ts.model.Typescript.ArrayRef)
+    ${member.name}: Array<${unescape(capture(render("type.ssp", Map("tpe" -> arr.innerType, "config" -> config))).trim)}>;
+  #otherwise
+    ${member.name}: ${member.typeRef};
+#end

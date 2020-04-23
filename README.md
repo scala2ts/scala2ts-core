@@ -1,4 +1,4 @@
-#scala2ts-core
+# scala2ts-core
 
 **Note: There is no current stable version in Maven yet. This is a WIP. You can pull and publish
 locally if you want to try it out. Documentation will be updated accordingly.**

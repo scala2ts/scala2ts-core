@@ -11,9 +11,9 @@ ${union.possibilities.map(tpe => unescape(capture(render("type.ssp", Map("tpe" -
 #case(map: com.github.scala2ts.model.Typescript.MapType)
 { [key: ${unescape(capture(render("type.ssp", Map("tpe" -> map.keyType, "config" -> config))).trim)}]: ${unescape(capture(render("type.ssp", Map("tpe" -> map.keyType, "config" -> config))).trim)} }
 #case(tpe: com.github.scala2ts.model.Typescript.CustomTypeRef)
-<% val tpeArgs = tpe.typeArgs.mkString(", ") %>
-${tpe.name}#if(tpe.typeArgs.nonEmpty)<${tpeArgs}>
-#end
+<%-- The below looks pretty bad, but we're playing in scalate's rendering semantics here --%>
+<%-- Tried using <%%> and binding the rendering output to a val but it didn't like that --%>
+${tpe.name}#if(tpe.typeArgs.nonEmpty)<#for((arg, i) <- tpe.typeArgs.zipWithIndex)${unescape(capture(render("type.ssp", Map("tpe" -> arg, "config" -> config))).trim)}#if(i < tpe.typeArgs.size - 1), #end#end>#end
 #otherwise
 ${tpe.toString.trim}
 #end

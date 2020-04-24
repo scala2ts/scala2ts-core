@@ -1,13 +1,24 @@
 package com.github.scala2ts.core
 
+import com.github.scala2ts.configuration.Configuration
+
 import scala.collection.immutable.ListSet
 import scala.reflect.api.Universe
 
-final class ScalaParser[U <: Universe](
-  universe: U
-) {
+final class ScalaParser[U <: Universe](universe: U) {
   import com.github.scala2ts.model.Scala.{TypeRef => ScalaTypeRef, _}
-  import universe.{ClassSymbol, MethodSymbol, ModuleSymbol, NoSymbol, NullaryMethodType, SingleTypeApi, Symbol, Type, TypeRef, typeOf}
+  import universe.{
+    ClassSymbol,
+    MethodSymbol,
+    ModuleSymbol,
+    NoSymbol,
+    NullaryMethodType,
+    SingleTypeApi,
+    Symbol,
+    Type,
+    TypeRef,
+    typeOf
+  }
 
   def parseTypes(types: List[Type]): ListSet[TypeDef] =
     parse(types, ListSet.empty[Type], ListSet.empty[TypeDef])
@@ -187,10 +198,8 @@ final class ScalaParser[U <: Universe](
       case "Option" =>
         val innerType = scalaType.asInstanceOf[TypeRef].args.head
         OptionRef(scalaTypeRef(innerType, typeParams))
-      case "LocalDate" =>
+      case "Date" | "Instant" | "LocalDate" | "Timestamp" | "LocalDateTime" | "ZonedDateTime" =>
         DateRef
-      case "Instant" | "Timestamp" | "LocalDateTime" | "ZonedDateTime" =>
-        DateTimeRef
       case typeParam if typeParams.contains(typeParam) =>
         TypeParamRef(typeParam)
       case _ if isAnyValChild(scalaType) =>

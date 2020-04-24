@@ -1,6 +1,6 @@
 package com.github.scala2ts.core
 
-import com.github.scala2ts.configuration.Configuration
+import com.github.scala2ts.configuration.{Configuration, DateMapping, LongDoubleMapping}
 import com.github.scala2ts.model.Typescript._
 import com.github.scala2ts.model.{Scala, Typescript}
 
@@ -12,70 +12,18 @@ final class Transpiler(config: Configuration) {
 
   def apply(
     scalaTypes: ListSet[Scala.TypeDef],
-    superInterface: Option[InterfaceDeclaration]): ListSet[Declaration] =
-    scalaTypes.flatMap { typeDef =>
-      typeDef match {
-        case scalaClass: Scala.CaseClass => {
-          val clazz = {
-            if (config.emitClasses) {
-              ListSet[Declaration](transpileClass(scalaClass, superInterface))
-            } else ListSet.empty[Declaration]
-          }
-
-          if (!config.emitInterfaces) clazz
-          else ListSet[Declaration](
-            transpileInterface(scalaClass, superInterface)) ++ clazz
-        }
-
-        case Scala.CaseObject(name, members) => {
-          val values = members.map { scalaMember =>
-            Member(
-              scalaMember.name,
-              transpileTypeRef(scalaMember.typeRef, inInterfaceContext = false))
-          }
-
-          ListSet[Declaration](
-            SingletonDeclaration(name, values, superInterface))
-        }
-
-        case Scala.SealedUnion(name, fields, possibilities) => {
-          val ifaceFields = fields.map { scalaMember =>
-            Member(
-              scalaMember.name,
-              transpileTypeRef(scalaMember.typeRef, inInterfaceContext = false))
-          }
-
-          val unionRef = InterfaceDeclaration(
-            s"I${name}", ifaceFields, ListSet.empty[String], superInterface)
-
-          apply(possibilities, Some(unionRef)) + UnionDeclaration(
-            name,
-            ifaceFields,
-            possibilities.map {
-              case Scala.CaseObject(nme, _) =>
-                CustomTypeRef(nme, ListSet.empty)
-
-              case Scala.CaseClass(n, _, _, tpeArgs) => {
-                CustomTypeRef(
-                  buildInterfaceName(n),
-                  tpeArgs.map { SimpleTypeRef(_) }
-                )
-              }
-
-              case m =>
-                CustomTypeRef(
-                  buildInterfaceName(m.name),
-                  ListSet.empty
-                )
-            },
-            superInterface)
-        }
-      }
+    superInterface: Option[InterfaceDeclaration]
+  ): ListSet[Declaration] =
+    // TODO: sealed traits and objects?
+    scalaTypes.collect {
+      case scalaClass: Scala.CaseClass =>
+        transpileInterface(scalaClass, superInterface)
     }
 
   private def transpileInterface(
     scalaClass: Scala.CaseClass,
-    superInterface: Option[InterfaceDeclaration]) = InterfaceDeclaration(
+    superInterface: Option[InterfaceDeclaration]
+  ) = InterfaceDeclaration(
     buildInterfaceName(scalaClass.name),
     scalaClass.fields.map { scalaMember =>
       Typescript.Member(
@@ -88,38 +36,26 @@ final class Transpiler(config: Configuration) {
   private def buildInterfaceName(name: String) =
     s"${config.typeNamePrefix}${name}${config.typeNameSuffix}"
 
-  private def transpileClass(
-    scalaClass: Scala.CaseClass,
-    superInterface: Option[InterfaceDeclaration]) = {
-    Typescript.ClassDeclaration(
-      scalaClass.name,
-      ClassConstructor(
-        scalaClass.fields map { scalaMember =>
-          ClassConstructorParameter(
-            scalaMember.name,
-            transpileTypeRef(scalaMember.typeRef, inInterfaceContext = false))
-        }),
-      values = scalaClass.values.map { v =>
-        Typescript.Member(v.name, transpileTypeRef(v.typeRef, false))
-      },
-      typeParams = scalaClass.typeArgs,
-      superInterface)
-  }
-
   private def transpileTypeRef(
     scalaTypeRef: Scala.TypeRef,
     inInterfaceContext: Boolean
   ): Typescript.TypeRef = scalaTypeRef match {
     case Scala.IntRef =>
       Typescript.NumberRef
-    case Scala.LongRef =>
-      Typescript.NumberRef
-    case Scala.DoubleRef =>
-      Typescript.NumberRef
+
+    case Scala.LongRef | Scala.DoubleRef =>
+      if (config.longDoubleMapping == LongDoubleMapping.AsNumber) {
+        Typescript.NumberRef
+      } else {
+        Typescript.StringRef
+      }
+
     case Scala.BooleanRef =>
       Typescript.BooleanRef
+
     case Scala.StringRef =>
       Typescript.StringRef
+
     case Scala.SeqRef(innerType) =>
       Typescript.ArrayRef(transpileTypeRef(innerType, inInterfaceContext))
 
@@ -129,9 +65,13 @@ final class Transpiler(config: Configuration) {
         actualName, typeArgs.map(transpileTypeRef(_, inInterfaceContext)))
 
     case Scala.DateRef =>
-      Typescript.DateRef
-    case Scala.DateTimeRef =>
-      Typescript.DateTimeRef
+      if (config.dateMapping == DateMapping.AsNumber) {
+        Typescript.NumberRef
+      } else if (config.dateMapping == DateMapping.AsString) {
+        Typescript.StringRef
+      } else {
+        Typescript.DateRef
+      }
 
     case Scala.TypeParamRef(name) =>
       Typescript.SimpleTypeRef(name)

@@ -45,7 +45,12 @@ For ease of use, here is the current list of configuration options and their def
 
 |**Option**|**Flag**|**Multi**|**Type**|**Default**|**Description**|
 |---|---|---|---|---|---|
-|fileIncludes|-P:scala2ts:file:includes|yes|Regex| |File path to include in compilation|
-|fileExcludes|-P:scala2ts:file:excludes|yes|Regex| |File path to exclude in compilation|
-|typeIncludes|-P:scala2ts:type:includes|yes|Regex| |Type name to include in compilation|
-|typeExcludes|-P:scala2ts:type:excludes|yes|Regex| |Type name to exclude in compilation|
+|Debug|-P:scala2ts:debug|no|Boolean|false|Enable debug logging|
+|Include File|-P:scala2ts:file:includes|yes|Regex| |File path to include in compilation|
+|Exclude File|-P:scala2ts:file:excludes|yes|Regex| |File path to exclude in compilation|
+|Include Type|-P:scala2ts:type:includes|yes|Regex| |Type name to include in compilation|
+|Exclude Type|-P:scala2ts:type:excludes|yes|Regex| |Type name to exclude in compilation|
+|Prefix|-P:scala2ts:type:prefix|no|String| |A prefix to use in your Typescript names (e.g. I for IInterface)|
+|Suffix|-P:scala2ts:type:suffix|no|String| |A suffix to use in your Typescript names (e.g. Data InterfaceData)|
+|Date Mapping|-P:scala2ts:date|no|String|AsDate|How to emit Date types (options: AsDate, AsString, AsNumber)|
+|Long & Double Mapping|-P:scala2ts:longDouble|no|String|AsString|How to emit Long(s) or Double(s) (options: AsString, AsNumber)|

@@ -3,9 +3,17 @@
 <%@ val tpe: com.github.scala2ts.model.Typescript.TypeRef %>
 #match(tpe)
 #case(arr: com.github.scala2ts.model.Typescript.ArrayRef)
-Array<${unescape(capture(render("type.ssp", Map("tpe" -> arr.innerType))).trim)}>
+Array<${unescape(capture(render("type.ssp", Map("tpe" -> arr.innerType, "config" -> config))).trim)}>
 #case(option: com.github.scala2ts.model.Typescript.OptionRef)
-${unescape(capture(render("type.ssp", Map("tpe" -> option.typeRef))).trim)} | null
+${unescape(capture(render("type.ssp", Map("tpe" -> option.typeRef, "config" -> config))).trim)} | null
+#case(union: com.github.scala2ts.model.Typescript.UnionType)
+${union.possibilities.map(tpe => unescape(capture(render("type.ssp", Map("tpe" -> tpe, "config" -> config))).trim)).mkString(" | ")}
+#case(map: com.github.scala2ts.model.Typescript.MapType)
+{ [key: ${unescape(capture(render("type.ssp", Map("tpe" -> map.keyType, "config" -> config))).trim)}]: ${unescape(capture(render("type.ssp", Map("tpe" -> map.keyType, "config" -> config))).trim)} }
+#case(tpe: com.github.scala2ts.model.Typescript.CustomTypeRef)
+<% val tpeArgs = tpe.typeArgs.mkString(", ") %>
+${tpe.name}#if(tpe.typeArgs.nonEmpty)<${tpeArgs}>
+#end
 #otherwise
 ${tpe.toString.trim}
 #end

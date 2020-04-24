@@ -1,20 +1,25 @@
 package com.github.scala2ts.configuration
 
+import com.github.scala2ts.configuration.DateMapping.DateMapping
+import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+
 case class Configuration(
+  debug: Boolean = false,
   files: IncludeExclude = IncludeExclude(),
   types: IncludeExclude = IncludeExclude(),
-  indentString: String = "  ",
   typeNamePrefix: String = "",
   typeNameSuffix: String = "",
-  emitInterfaces: Boolean = true,
-  emitClasses: Boolean = false,
-  optionToNullable: Boolean = true,
-  optionToUndefined: Boolean = false
+  dateMapping: DateMapping = DateMapping.AsDate,
+  longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString
 ) {
   import Configuration.Args._
 
   def fromCompilerOptions(options: List[String]): Configuration =
     options.foldLeft(this) {
+      case (config, option) if option.startsWith(debugArg) =>
+        config.copy(
+          debug = argValue(option, debugArg) == "true"
+        )
       case (config, option) if option.startsWith(fileIncludesArg) =>
         config.copy(
           files = config.files.copy(
@@ -39,10 +44,6 @@ case class Configuration(
             exclude = config.files.exclude :+ argValue(option, typeExcludesArg).r
           )
         )
-      case (config, option) if option.startsWith(indentStringArg) =>
-        config.copy(
-          indentString = argValue(option, indentStringArg)
-        )
       case (config, option) if option.startsWith(typeNamePrefixArg) =>
         config.copy(
           typeNamePrefix = argValue(option, typeNamePrefixArg)
@@ -51,21 +52,13 @@ case class Configuration(
         config.copy(
           typeNameSuffix = argValue(option, typeNameSuffixArg)
         )
-      case (config, option) if option.startsWith(emitInterfacesArg) =>
+      case (config, option) if option.startsWith(dateMappingArg) =>
         config.copy(
-          emitInterfaces = argValue(option, emitInterfacesArg) == "true"
+          dateMapping = DateMapping.withName(argValue(option, dateMappingArg))
         )
-      case (config, option) if option.startsWith(emitClassesArg) =>
+      case (config, option) if option.startsWith(longDoubleMappingArg) =>
         config.copy(
-          emitClasses = argValue(option, emitClassesArg) == "true"
-        )
-      case (config, option) if option.startsWith(optionToNullableArg) =>
-        config.copy(
-          optionToNullable = argValue(option, optionToNullableArg) == "true"
-        )
-      case (config, option) if option.startsWith(optionToUndefinedArg) =>
-        config.copy(
-          optionToUndefined = argValue(option, optionToUndefinedArg) == "true"
+          longDoubleMapping = LongDoubleMapping.withName(argValue(option, longDoubleMappingArg))
         )
     }
 }
@@ -78,6 +71,8 @@ object Configuration {
     def argValue(option: String, arg: String): String =
       option.substring(arg.length)
 
+    lazy val debugArg: String =
+      argBuilder("debug")
     lazy val fileIncludesArg: String =
       argBuilder("file", "includes")
     lazy val fileExcludesArg: String =
@@ -86,20 +81,14 @@ object Configuration {
       argBuilder("type", "includes")
     lazy val typeExcludesArg: String =
       argBuilder("type", "excludes")
-    lazy val indentStringArg: String =
-      argBuilder("indent")
     lazy val typeNamePrefixArg: String =
       argBuilder("type", "prefix")
     lazy val typeNameSuffixArg: String =
       argBuilder("type", "suffix")
-    lazy val emitInterfacesArg: String =
-      argBuilder("emitInterfaces")
-    lazy val emitClassesArg: String =
-      argBuilder("emitClasses")
-    lazy val optionToNullableArg: String =
-      argBuilder("optionToNullable")
-    lazy val optionToUndefinedArg: String =
-      argBuilder("optionToUndefined")
+    lazy val dateMappingArg: String =
+      argBuilder("date")
+    lazy val longDoubleMappingArg: String =
+      argBuilder("longDouble")
   }
 
 }

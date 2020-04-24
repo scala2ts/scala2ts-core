@@ -41,11 +41,15 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
         val file: File = unit.source.file.file
 
         if (includesFile(file)) {
-          global.inform(s"${plugin.name}.debug: Checking file ${file.getAbsoluteFile}")
+          if (config.debug) {
+            global.inform(s"${plugin.name}.debug: Checking file ${file.getAbsoluteFile}")
+          }
 
           handle(unit)
         } else {
-          global.inform(s"${plugin.name}.debug: Skipping file ${file.getAbsoluteFile}")
+          if (config.debug) {
+            global.inform(s"${plugin.name}.debug: Skipping file ${file.getAbsoluteFile}")
+          }
         }
       }
 
@@ -97,21 +101,29 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
 
           if (sym.isModule && !sym.hasPackageFlag) {
             if (includesType(sym)) {
-              global.inform(s"${plugin.name}.debug: Handling object ${sym.fullName}")
+              if (config.debug) {
+                global.inform(s"${plugin.name}.debug: Handling object ${sym.fullName}")
+              }
 
               Seq(sym.typeSignature)
             } else {
-              global.inform(s"${plugin.name}.debug: Skipping object ${sym.fullName}")
+              if (config.debug) {
+                global.inform(s"${plugin.name}.debug: Skipping object ${sym.fullName}")
+              }
 
               Seq.empty
             }
           } else if (sym.isClass) {
             if (includesType(sym)) {
-              global.inform(s"${plugin.name}.debug: Handling class ${sym.fullName}")
+              if (config.debug) {
+                global.inform(s"${plugin.name}.debug: Handling class ${sym.fullName}")
+              }
 
               Seq(sym.typeSignature)
             } else {
-              global.inform(s"${plugin.name}.debug: Skipping class ${sym.fullName}")
+              if (config.debug) {
+                global.inform(s"${plugin.name}.debug: Skipping class ${sym.fullName}")
+              }
 
               Seq.empty
             }

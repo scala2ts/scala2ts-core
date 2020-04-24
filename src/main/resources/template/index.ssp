@@ -1,5 +1,5 @@
 <%-- Main Declaration File --%>
-${include("headline.ssp")}
+${capture(include("headline.ssp")).trim}
 <%-- TODO: How to import the types below better --%>
 <%@ val config: com.github.scala2ts.configuration.Configuration %>
 <%@ val types: scala.collection.immutable.ListSet[com.github.scala2ts.model.Typescript.Declaration] %>

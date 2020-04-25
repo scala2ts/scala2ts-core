@@ -12,7 +12,8 @@ case class Configuration(
   dateMapping: DateMapping = DateMapping.AsDate,
   longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString,
   outDir: Option[String] = None,
-  outFileName: String = "index.d.ts"
+  outFileName: String = "index.d.ts",
+  packageJson: PackageJson = PackageJson()
 ) {
   import Configuration.Args._
 
@@ -70,6 +71,32 @@ case class Configuration(
         config.copy(
           outFileName = argValue(option, outFileNameArg)
         )
+      case (config, option) if option.startsWith(packageJsonNameArg) =>
+        config.copy(
+          packageJson = config.packageJson.copy(
+            name = Some(argValue(option, packageJsonNameArg))
+          )
+        )
+      case (config, option) if option.startsWith(packageJsonVersionArg) =>
+        config.copy(
+          packageJson = config.packageJson.copy(
+            version = Some(argValue(option, packageJsonVersionArg))
+          )
+        )
+      case (config, option) if option.startsWith(packageJsonTypesArg) =>
+        config.copy(
+          packageJson = config.packageJson.copy(
+            types = Some(argValue(option, packageJsonTypesArg))
+          )
+        )
+      case (config, option) if option.startsWith(packageJsonRegistryArg) =>
+        config.copy(
+          packageJson = config.packageJson.copy(
+            publishConfig = Some(PublishConfig(
+              registry = argValue(option, packageJsonRegistryArg)
+            ))
+          )
+        )
     }
 }
 
@@ -103,6 +130,14 @@ object Configuration {
       argBuilder("outDir")
     lazy val outFileNameArg: String =
       argBuilder("outFileName")
+    lazy val packageJsonNameArg: String =
+      argBuilder("pj", "name")
+    lazy val packageJsonVersionArg: String =
+      argBuilder("pj", "version")
+    lazy val packageJsonTypesArg: String =
+      argBuilder("pj", "types")
+    lazy val packageJsonRegistryArg: String =
+      argBuilder("pj", "registry")
   }
 
 }

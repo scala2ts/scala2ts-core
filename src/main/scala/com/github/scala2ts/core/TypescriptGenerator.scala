@@ -1,6 +1,6 @@
 package com.github.scala2ts.core
 
-import com.github.scala2ts.configuration.Configuration
+import com.github.scala2ts.configuration.{Configuration, OptionPickler}
 import com.github.scala2ts.model.Scala.TypeDef
 import com.github.scala2ts.model.Typescript.Declaration
 
@@ -23,14 +23,20 @@ object TypescriptGenerator {
 
     val output: String = Renderer(config, tsTypes)
 
-    System.out.println(output)
-
     if (config.outDir.nonEmpty) {
       os.write.over(
         Path(config.outDir.get) / config.outFileName,
         output,
         createFolders = true
       )
+
+      if (config.packageJson.name.nonEmpty) {
+        os.write.over(
+          Path(config.outDir.get) / "package.json",
+          OptionPickler.write(config.packageJson, 2),
+          createFolders = true
+        )
+      }
     }
   }
 

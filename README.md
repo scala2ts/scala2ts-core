@@ -54,3 +54,9 @@ For ease of use, here is the current list of configuration options and their def
 |Suffix|-P:scala2ts:type:suffix|no|String| |A suffix to use in your Typescript names (e.g. Data InterfaceData)|
 |Date Mapping|-P:scala2ts:date|no|String|AsDate|How to emit Date types (options: AsDate, AsString, AsNumber)|
 |Long & Double Mapping|-P:scala2ts:longDouble|no|String|AsString|How to emit Long(s) or Double(s) (options: AsString, AsNumber)|
+|Output Directory|-P:scala2ts:outDir|no|String| |What directory to emit files to|
+|Output File Name|-P:scala2ts:outFileName|no|String|index.d.ts|The name of the outputted Typescript file|
+|package.json Name|-P:scala2ts:pj:name|no|String| |The name to use in package.json. Note: This is the only required field to enable package.json to emit|
+|package.json Version|-P:scala2ts:pj:name|no|String| |The version to use in package.json|
+|package.json Types|-P:scala2ts:pj:types|no|String| |The path to use in the types field of package.json|
+|package.json publishConfig Registry|-P:scala2ts:pj:registry| |The url to use for an external NPM registry|

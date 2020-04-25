@@ -23,6 +23,10 @@ lazy val root = project.in(file("."))
       "com.lihaoyi"           %% "os-lib"         % (scalaBinaryVersion.value match {
         case "2.11" => "0.2.9"
         case "2.12" | "2.13" => "0.7.0"
+      }),
+      "com.lihaoyi"           %% "upickle"        % (scalaBinaryVersion.value match {
+        case "2.11" => "0.7.4"
+        case "2.12" | "2.13" => "1.1.0"
       })
     ),
     buildInfoKeys := Seq(name, version, scalaVersion, sbtVersion),

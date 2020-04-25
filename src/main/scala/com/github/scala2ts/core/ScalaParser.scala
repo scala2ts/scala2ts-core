@@ -1,7 +1,5 @@
 package com.github.scala2ts.core
 
-import com.github.scala2ts.configuration.Configuration
-
 import scala.collection.immutable.ListSet
 import scala.reflect.api.Universe
 
@@ -21,7 +19,11 @@ final class ScalaParser[U <: Universe](universe: U) {
   }
 
   def parseTypes(types: List[Type]): ListSet[TypeDef] =
-    parse(types, ListSet.empty[Type], ListSet.empty[TypeDef])
+    parse(
+      types,
+      ListSet.empty[Type],
+      ListSet.empty[TypeDef]
+    )
 
   private def parseType(tpe: Type): Option[TypeDef] = tpe match {
     case _: SingleTypeApi =>

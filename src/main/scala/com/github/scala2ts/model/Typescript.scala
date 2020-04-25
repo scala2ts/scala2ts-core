@@ -70,10 +70,6 @@ object Typescript {
     override def toString = "Date"
   }
 
-  case object DateTimeRef extends TypeRef {
-    override def toString = "DateTime"
-  }
-
   case object NullRef extends TypeRef {
     override def toString = "null"
   }
@@ -88,7 +84,7 @@ object Typescript {
 
   case class OptionRef(typeRef: TypeRef) extends TypeRef
 
-  case class UnionType(possibilities: ListSet[TypeRef]) extends TypeRef
+  case class UnionRef(possibilities: ListSet[TypeRef]) extends TypeRef
 
-  case class MapType(keyType: TypeRef, valueType: TypeRef) extends TypeRef
+  case class MapRef(keyType: TypeRef, valueType: TypeRef) extends TypeRef
 }

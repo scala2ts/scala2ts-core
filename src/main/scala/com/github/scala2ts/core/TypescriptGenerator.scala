@@ -6,6 +6,7 @@ import com.github.scala2ts.model.Typescript.Declaration
 
 import scala.collection.immutable.ListSet
 import scala.reflect.api.Universe
+import os.{/, Path}
 
 object TypescriptGenerator {
 
@@ -20,10 +21,17 @@ object TypescriptGenerator {
     val parsedTypes: ListSet[TypeDef] = parser.parseTypes(types)
     val tsTypes: ListSet[Declaration] = transpiler(parsedTypes)
 
-    val renderer: Renderer = Renderer(config)
-    val output: String = renderer.render(tsTypes)
+    val output: String = Renderer(config, tsTypes)
 
     System.out.println(output)
+
+    if (config.outDir.nonEmpty) {
+      os.write.over(
+        Path(config.outDir.get) / config.outFileName,
+        output,
+        createFolders = true
+      )
+    }
   }
 
 }

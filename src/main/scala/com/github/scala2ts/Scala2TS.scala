@@ -35,7 +35,18 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
     private final class TypescriptPhase(prev: Phase) extends StdPhase(prev) {
       import global._
 
+      private var types: List[Type] = List.empty[Type]
+
       override def name: String = Scala2TS.this.name
+
+      override def run(): Unit = {
+        super.run()
+
+        TypescriptGenerator.generate(global)(
+          config = plugin.config,
+          types = types
+        )
+      }
 
       override def apply(unit: CompilationUnit): Unit = {
         val file: File = unit.source.file.file
@@ -59,7 +70,9 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
       private def includesFile(file: File): Boolean = {
         val path: String = file.getAbsolutePath
 
-        if (!matches(path, config.files.include)) {
+        if (config.files.include.isEmpty && config.files.exclude.isEmpty) {
+          true
+        } else if (!matches(path, config.files.include)) {
           false
         } else {
           !matches(path, config.files.exclude)
@@ -96,7 +109,7 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
       }
 
       private def handle(unit: CompilationUnit): Unit = {
-        val types: List[Type] =  unit.body.children.flatMap { tree: Tree =>
+        types = types ++ unit.body.children.flatMap { tree: Tree =>
           val sym: Symbol = tree.symbol
 
           if (sym.isModule && !sym.hasPackageFlag) {
@@ -105,13 +118,13 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
                 global.inform(s"${plugin.name}.debug: Handling object ${sym.fullName}")
               }
 
-              Seq(sym.typeSignature)
+              List(sym.typeSignature)
             } else {
               if (config.debug) {
                 global.inform(s"${plugin.name}.debug: Skipping object ${sym.fullName}")
               }
 
-              Seq.empty
+              List.empty
             }
           } else if (sym.isClass) {
             if (includesType(sym)) {
@@ -119,23 +132,18 @@ class Scala2TS(val global: Global) extends Plugin { plugin =>
                 global.inform(s"${plugin.name}.debug: Handling class ${sym.fullName}")
               }
 
-              Seq(sym.typeSignature)
+              List(sym.typeSignature)
             } else {
               if (config.debug) {
                 global.inform(s"${plugin.name}.debug: Skipping class ${sym.fullName}")
               }
 
-              Seq.empty
+              List.empty
             }
           } else {
-            Seq.empty
+            List.empty
           }
         }
-
-        TypescriptGenerator.generate(global)(
-          config = plugin.config,
-          types = types
-        )
       }
     }
   }

@@ -10,7 +10,9 @@ case class Configuration(
   typeNamePrefix: String = "",
   typeNameSuffix: String = "",
   dateMapping: DateMapping = DateMapping.AsDate,
-  longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString
+  longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString,
+  outDir: Option[String] = None,
+  outFileName: String = "index.d.ts"
 ) {
   import Configuration.Args._
 
@@ -60,6 +62,14 @@ case class Configuration(
         config.copy(
           longDoubleMapping = LongDoubleMapping.withName(argValue(option, longDoubleMappingArg))
         )
+      case (config, option) if option.startsWith(outDirArg) =>
+        config.copy(
+          outDir = Some(argValue(option, outDirArg))
+        )
+      case (config, option) if option.startsWith(outFileNameArg) =>
+        config.copy(
+          outFileName = argValue(option, outFileNameArg)
+        )
     }
 }
 
@@ -89,6 +99,10 @@ object Configuration {
       argBuilder("date")
     lazy val longDoubleMappingArg: String =
       argBuilder("longDouble")
+    lazy val outDirArg: String =
+      argBuilder("outDir")
+    lazy val outFileNameArg: String =
+      argBuilder("outFileName")
   }
 
 }

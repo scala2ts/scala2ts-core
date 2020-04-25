@@ -1,7 +1,0 @@
-<%-- Top-Of-File Comment Block --%>
-#{ import com.github.scala2ts.BuildInfo._ }#
-/**
- * Scala2TS-Generated Typescript Definitions
- * Scala2TS: ${version}, Scala: ${scalaVersion}, SBT: ${sbtVersion}
- * Created at ${java.time.OffsetDateTime.now().toString}
- */

@@ -14,16 +14,47 @@ final class Transpiler(config: Configuration) {
     scalaTypes: ListSet[Scala.TypeDef],
     superInterface: Option[InterfaceDeclaration]
   ): ListSet[Declaration] =
-    // TODO: sealed traits and objects?
-    scalaTypes.collect {
-      case scalaClass: Scala.CaseClass =>
-        transpileInterface(scalaClass, superInterface)
+    scalaTypes.flatMap[Declaration, ListSet[Declaration]] {
+      case scalaClass: Scala.CaseClass if !withinUnion(scalaTypes, scalaClass) =>
+        ListSet(transpileInterface(scalaClass, superInterface))
+
+      case Scala.SealedUnion(name, fields, possibilities) =>
+        val iFaceFields = fields.map { member =>
+          Member(
+            member.name,
+            transpileTypeRef(member.typeRef, inInterfaceContext = false)
+          )
+        }
+
+        val unionRef = InterfaceDeclaration(
+          buildInterfaceName(name),
+          iFaceFields,
+          ListSet.empty,
+          superInterface
+        )
+
+        apply(possibilities, Some(unionRef)) + UnionDeclaration(
+          name,
+          iFaceFields,
+          possibilities.map {
+            case Scala.CaseObject(nme, _) =>
+              CustomTypeRef(buildInterfaceName(nme), ListSet.empty)
+
+            case Scala.CaseClass(n, _, _, tpeArgs) =>
+              CustomTypeRef(buildInterfaceName(n), tpeArgs.map(SimpleTypeRef))
+
+            case m =>
+              CustomTypeRef(buildInterfaceName(m.name), ListSet.empty)
+          },
+          superInterface
+        )
+      case _ => ListSet.empty
     }
 
   private def transpileInterface(
     scalaClass: Scala.CaseClass,
     superInterface: Option[InterfaceDeclaration]
-  ) = InterfaceDeclaration(
+  ): InterfaceDeclaration = InterfaceDeclaration(
     buildInterfaceName(scalaClass.name),
     scalaClass.fields.map { scalaMember =>
       Typescript.Member(
@@ -31,10 +62,17 @@ final class Transpiler(config: Configuration) {
         transpileTypeRef(scalaMember.typeRef, inInterfaceContext = true))
     },
     typeParams = scalaClass.typeArgs,
-    superInterface = superInterface)
+    superInterface = superInterface
+  )
 
   private def buildInterfaceName(name: String) =
     s"${config.typeNamePrefix}${name}${config.typeNameSuffix}"
+
+  private def withinUnion(types: ListSet[Scala.TypeDef], tpe: Scala.TypeDef): Boolean =
+    types exists {
+      case union: Scala.SealedUnion => union.possibilities.exists { _.name == tpe.name }
+      case _ => false
+    }
 
   private def transpileTypeRef(
     scalaTypeRef: Scala.TypeRef,
@@ -79,12 +117,12 @@ final class Transpiler(config: Configuration) {
     case Scala.OptionRef(innerType) =>
       Typescript.OptionRef(transpileTypeRef(innerType, inInterfaceContext))
 
-    case Scala.MapRef(kT, vT) => Typescript.MapType(
+    case Scala.MapRef(kT, vT) => Typescript.MapRef(
       transpileTypeRef(kT, inInterfaceContext),
       transpileTypeRef(vT, inInterfaceContext))
 
     case Scala.UnionRef(possibilities) =>
-      Typescript.UnionType(possibilities.map { i =>
+      Typescript.UnionRef(possibilities.map { i =>
         transpileTypeRef(i, inInterfaceContext)
       })
 

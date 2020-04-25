@@ -20,27 +20,16 @@ lazy val root = project.in(file("."))
     libraryDependencies ++= Seq(
       "org.scala-lang"        %  "scala-compiler" % scalaVersion.value % "provided",
       "org.scala-lang"        %  "scala-reflect"  % scalaVersion.value % "provided",
-      "org.scalatra.scalate"  %% "scalate-core"   % (scalaBinaryVersion.value match {
-        case "2.10" => "1.8.0"
-        case _ => "1.9.5"
+      "com.lihaoyi"           %% "os-lib"         % (scalaBinaryVersion.value match {
+        case "2.11" => "0.2.9"
+        case "2.12" | "2.13" => "0.7.0"
       })
     ),
     buildInfoKeys := Seq(name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "com.github.scala2ts",
     test in assembly := {},
     assemblyOption in assembly :=
-      (assemblyOption in assembly).value.copy(includeScala = true),
-    // Ironically enough, scalate depends on scala-parser-combinators and
-    // scala-xml, however those _arent_ supplied to compiler plugins, so we
-    // need those bundled and not library,reflect,compiler here
-    assemblyExcludedJars in assembly := {
-      val cp = (fullClasspath in assembly).value
-      cp filter { dep =>
-        dep.data.getName.contains("scala-library") ||
-        dep.data.getName.contains("scala-reflect") ||
-        dep.data.getName.contains("scala-compiler")
-      }
-    },
+      (assemblyOption in assembly).value.copy(includeScala = false),
     /**
      * There's some classpath particularities when executing compiler plugins
      * so we need to make a fatjar

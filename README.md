@@ -59,4 +59,4 @@ For ease of use, here is the current list of configuration options and their def
 |package.json Name|-P:scala2ts:pj:name|no|String| |The name to use in package.json. Note: This is the only required field to enable package.json to emit|
 |package.json Version|-P:scala2ts:pj:name|no|String| |The version to use in package.json|
 |package.json Types|-P:scala2ts:pj:types|no|String| |The path to use in the types field of package.json|
-|package.json publishConfig Registry|-P:scala2ts:pj:registry| |The url to use for an external NPM registry|
+|package.json publishConfig Registry|-P:scala2ts:pj:registry|no|String| |The url to use for an external NPM registry|

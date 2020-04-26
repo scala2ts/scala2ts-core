@@ -1,10 +1,5 @@
 # scala2ts-core
 
-**Note: There is no current stable version in Maven yet. This is a WIP. You can pull and publish
-locally if you want to try it out. Documentation will be updated accordingly.**
-
----
-
 > Transform your Scala classes, objects and traits into Typescript interfaces and classes
 
 This repository contains the parser, transpiler and renderer for the scala2ts
@@ -18,6 +13,12 @@ instead of this project directly. It streamlines adding the compiler plugin and 
 
 You can find the project [here](https://github.com/scala2ts/scala2ts-sbt). If you dont use SBT or have a 
 more complex build configuration, proceed below.
+
+## Support
+
+|**Version**|**Scala**|
+|---|---|
+|1.0.0|2.13<br />2.12<br />2.11|
 
 ## Usage
 

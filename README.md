@@ -61,3 +61,21 @@ For ease of use, here is the current list of configuration options and their def
 |package.json Version|-P:scala2ts:pj:name|no|String| |The version to use in package.json|
 |package.json Types|-P:scala2ts:pj:types|no|String| |The path to use in the types field of package.json|
 |package.json publishConfig Registry|-P:scala2ts:pj:registry|no|String| |The url to use for an external NPM registry|
+
+## Motivations
+
+Most current Scala -> TS solutions rely on SBT, where they couple the transpile code within an SBT plugin. The way
+SBT operates, it has its own Scala version separate from the project its operating on. This means that these plugins
+can only operate on 2.10 (SBT 0.x) and 2.12 (SBT 1.x) codebases. 
+
+Why is this the case? Scala's reflection library can only operate on Scala code produced by the specific Scala version
+being used at the time. If I compile a 2.13 project, I cannot use the 2.12 reflection library against that code. This 
+is where the limitations of the current SBT plugins comes to light.
+
+This library tries to eliminate that by operating at the compiler level, where we're guaranteed binary compatibility.
+The SBT plugin (scala2ts-sbt) merely acts as a configuration layer for the compiler plugin.
+
+## Acknowledgments
+
+Big thanks to the maintainers of `scala-ts` and `Typescript-Generator` projects, specifically [@cchantep](https://github.com/cchantep) [PR](https://github.com/scala-ts/scala-ts/pull/20) 
+with the `scala-ts`library which was the inspiration for this project.

@@ -16,9 +16,11 @@ more complex build configuration, proceed below.
 
 ## Support
 
+![Maven Central](https://img.shields.io/maven-central/v/com.github.scala2ts/scala2ts-core_2.13)
+
 |**Version**|**Scala**|
 |---|---|
-|1.0.0|2.13<br />2.12<br />2.11|
+|1.0.x|2.13<br />2.12<br />2.11|
 
 ## Usage
 

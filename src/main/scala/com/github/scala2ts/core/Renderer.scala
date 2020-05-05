@@ -26,10 +26,16 @@ object Renderer {
        | */""".stripMargin
 
   private[this] def makeDeclaration(decl: Declaration): String = decl match {
+    case enum: EnumerationDeclaration => makeEnum(enum)
     case iface: InterfaceDeclaration => makeInterface(iface)
     case union: UnionDeclaration => makeUnion(union)
     case _ => ""
   }
+
+  private[this] def makeEnum(enum: EnumerationDeclaration): String =
+    s"""export const enum ${enum.name} {
+       |  ${enum.values.map(e => s"$e = '$e'").mkString(",\n  ")}
+       |}""".stripMargin
 
   private[this] def makeUnion(union: UnionDeclaration): String =
     if (union.fields.isEmpty) s"export interface ${union.name}${makeSuper(union.superInterface)} { }"

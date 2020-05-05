@@ -1,5 +1,7 @@
 package com.github.scala2ts.core
 
+import enumeratum.EnumEntry
+
 import scala.collection.immutable.ListSet
 import scala.reflect.api.Universe
 
@@ -11,7 +13,6 @@ final class ScalaParser[U <: Universe](universe: U) {
     ModuleSymbol,
     NoSymbol,
     NullaryMethodType,
-    SingleTypeApi,
     Symbol,
     Type,
     TypeRef,
@@ -26,26 +27,36 @@ final class ScalaParser[U <: Universe](universe: U) {
     )
 
   private def parseType(tpe: Type): Option[TypeDef] = tpe match {
-    case _: SingleTypeApi =>
-      parseObject(tpe)
+    case _ if (
+      (tpe.getClass.getName contains "ModuleType") &&
+      tpe <:< typeOf[Enumeration]
+    ) => parseScalaEnum(tpe)
 
-    case _ if (tpe.getClass.getName contains "ModuleType" /*Workaround*/ ) =>
-      parseObject(tpe)
+    case _ if (
+      tpe.typeSymbol.isClass &&
+      tpe.typeParams.isEmpty && ((
+        tpe.typeSymbol.asClass.isTrait &&
+        tpe.typeSymbol.asClass.isSealed
+      ) || (
+        tpe.typeSymbol.asClass.isAbstract &&
+        tpe.typeSymbol.asClass.isSealed
+      )) && tpe <:< typeOf[EnumEntry]
+    ) => parseEnumerationEnum(tpe)
 
-    case _ if tpe.typeSymbol.isClass =>
-      val classSym = tpe.typeSymbol.asClass
+    case _ if (
+      tpe.typeSymbol.isClass &&
+      tpe.typeParams.isEmpty &&
+      tpe.typeSymbol.asClass.isTrait &&
+      tpe.typeSymbol.asClass.isSealed
+    ) => parseSealedUnion(tpe)
 
-      if (classSym.isTrait && classSym.isSealed && tpe.typeParams.isEmpty) {
-        parseSealedUnion(tpe)
-      } else if (isCaseClass(tpe) && !isAnyValChild(tpe)) {
-        parseCaseClass(tpe) // TODO: Special case for ValueClass
-      } else {
-        Option.empty[TypeDef]
-      }
+    case _ if (
+      tpe.typeSymbol.isClass &&
+      isCaseClass(tpe) &&
+      !isAnyValChild(tpe)
+    ) => parseCaseClass(tpe)
 
-    case _ =>
-      // logger.warning(s"Unsupported Scala type: $tpe")
-      Option.empty[TypeDef]
+    case _ => Option.empty[TypeDef]
   }
 
   private object Field {
@@ -67,36 +78,36 @@ final class ScalaParser[U <: Universe](universe: U) {
     }
   }
 
-  private def parseObject(tpe: Type): Option[CaseObject] = {
-    val members = tpe.decls.collect {
-      case Field(m) => member(m, List.empty)
-    }
+  private def parseScalaEnum(enum: Type): Option[ScalaEnum] = {
+    val values = enum.members.filter(_.isTerm).map(_.asTerm).filter(sym => (
+      sym.typeSignature <:< typeOf[Enumeration#Value] &&
+      sym.isVal
+    )).map(_.name.toString.trim)
 
-    Some(CaseObject(
-      tpe.typeSymbol.name.toString stripSuffix ".type",
-      ListSet.empty ++ members
+    Some(ScalaEnum(
+      enum.typeSymbol.name.toString.trim,
+      ListSet.empty ++ values
+    ))
+  }
+
+  private def parseEnumerationEnum(enum: Type): Option[EnumerationEnum] = {
+    Some(EnumerationEnum(
+      enum.typeSymbol.name.toString.trim,
+      ListSet.empty ++ enum.typeSymbol.asClass.knownDirectSubclasses.map(_.name.toString)
     ))
   }
 
   private def parseSealedUnion(tpe: Type): Option[SealedUnion] = {
-    // TODO: Check & warn there is no type parameters for a union type
-
-    // Members
     val members = tpe.decls.collect {
       case m: MethodSymbol if (m.isAbstract && m.isPublic && !m.isImplicit &&
         !m.name.toString.endsWith("$")) => member(m, List.empty)
     }
 
-    directKnownSubclasses(tpe) match {
-      case possibilities @ (_ :: _) =>
-        Some(SealedUnion(
-          tpe.typeSymbol.name.toString,
-          ListSet.empty ++ members,
-          parseTypes(possibilities)
-        ))
-
-      case _ => Option.empty[SealedUnion]
-    }
+    Some(SealedUnion(
+      tpe.typeSymbol.name.toString,
+      ListSet.empty ++ members,
+      parseTypes(tpe.typeSymbol.asClass.knownDirectSubclasses.map(_.typeSignature).toList)
+    ))
   }
 
   private def parseCaseClass(caseClassType: Type): Option[CaseClass] = {
@@ -237,43 +248,5 @@ final class ScalaParser[U <: Universe](universe: U) {
 
   @inline private def isAnyValChild(scalaType: Type): Boolean =
     scalaType <:< typeOf[AnyVal]
-
-  private def directKnownSubclasses(tpe: Type): List[Type] = {
-    // Workaround for SI-7046: https://issues.scala-lang.org/browse/SI-7046
-    val tpeSym = tpe.typeSymbol.asClass
-
-    @annotation.tailrec
-    def allSubclasses(path: Iterable[Symbol], subclasses: Set[Type]): Set[Type] = path.headOption match {
-      case Some(cls: ClassSymbol) if (
-        tpeSym != cls && cls.selfType.baseClasses.contains(tpeSym)) => {
-        val newSub: Set[Type] = if (!cls.isCaseClass) {
-          // logger.warning(s"cannot handle class ${cls.fullName}: no case accessor")
-          Set.empty
-        } else if (cls.typeParams.nonEmpty) {
-          // logger.warning(s"cannot handle class ${cls.fullName}: type parameter not supported")
-          Set.empty
-        } else Set(cls.selfType)
-
-        allSubclasses(path.tail, subclasses ++ newSub)
-      }
-
-      case Some(o: ModuleSymbol) if (
-        o.companion == NoSymbol && // not a companion object
-          o.typeSignature.baseClasses.contains(tpeSym)) =>
-        allSubclasses(path.tail, subclasses + o.typeSignature)
-
-      case Some(o: ModuleSymbol) if (
-        o.companion == NoSymbol // not a companion object
-        ) => allSubclasses(path.tail, subclasses)
-
-      case Some(_) => allSubclasses(path.tail, subclasses)
-
-      case _ => subclasses
-    }
-
-    if (tpeSym.isSealed && tpeSym.isAbstract) {
-      allSubclasses(tpeSym.owner.typeSignature.decls, Set.empty).toList
-    } else List.empty
-  }
 
 }

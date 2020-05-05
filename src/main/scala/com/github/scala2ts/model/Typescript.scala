@@ -45,6 +45,11 @@ object Typescript {
     superInterface: Option[InterfaceDeclaration]
   ) extends Declaration
 
+  case class EnumerationDeclaration(
+    name: String,
+    values: ListSet[String]
+  ) extends Declaration
+
   case class ClassConstructor(parameters: ListSet[ClassConstructorParameter])
 
   case class ClassConstructorParameter(

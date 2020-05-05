@@ -25,6 +25,16 @@ object Scala {
     possibilities: ListSet[TypeDef]
   ) extends TypeDef
 
+  case class ScalaEnum(
+    name: String,
+    values: ListSet[String]
+  ) extends TypeDef
+
+  case class EnumerationEnum(
+    name: String,
+    values: ListSet[String]
+  ) extends TypeDef
+
   sealed trait TypeRef
 
   case class OptionRef(innerType: TypeRef) extends TypeRef

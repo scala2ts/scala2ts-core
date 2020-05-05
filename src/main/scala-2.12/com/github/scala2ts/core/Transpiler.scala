@@ -15,6 +15,15 @@ final class Transpiler(config: Configuration) {
     superInterface: Option[InterfaceDeclaration]
   ): ListSet[Declaration] =
     scalaTypes.flatMap[Declaration, ListSet[Declaration]] {
+      case Scala.ScalaEnum(name, values) => ListSet(EnumerationDeclaration(
+        name,
+        values
+      ))
+      case Scala.EnumerationEnum(name, values) => ListSet(EnumerationDeclaration(
+        name,
+        values
+      ))
+
       case scalaClass: Scala.CaseClass if !withinUnion(scalaTypes, scalaClass) =>
         ListSet(transpileInterface(scalaClass, superInterface))
 

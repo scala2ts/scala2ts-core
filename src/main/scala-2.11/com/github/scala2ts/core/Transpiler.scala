@@ -123,6 +123,9 @@ final class Transpiler(config: Configuration) {
     case Scala.TypeParamRef(name) =>
       Typescript.SimpleTypeRef(name)
 
+    case Scala.EnumRef(name) =>
+      Typescript.SimpleTypeRef(name)
+
     case Scala.OptionRef(innerType) =>
       Typescript.OptionRef(transpileTypeRef(innerType, inInterfaceContext))
 

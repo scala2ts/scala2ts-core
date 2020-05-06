@@ -73,6 +73,7 @@ object Renderer {
       s"{ [key: ${makeType(map.keyType)}]: ${makeType(map.valueType)} }"
     case other: CustomTypeRef =>
       s"${other.name}${makeTypeArgs(other.typeArgs.map(_.toString))}"
+    case simple: SimpleTypeRef => simple.name
     case _ => ref.toString
   }
 

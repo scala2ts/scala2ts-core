@@ -1,5 +1,9 @@
 package com.github.scala2ts.core
 
+import java.sql.Timestamp
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, ZonedDateTime}
+import java.util.Date
+
 import enumeratum.EnumEntry
 
 import scala.collection.immutable.ListSet
@@ -8,12 +12,8 @@ import scala.reflect.api.Universe
 final class ScalaParser[U <: Universe](universe: U) {
   import com.github.scala2ts.model.Scala.{TypeRef => ScalaTypeRef, _}
   import universe.{
-    ClassSymbol,
     MethodSymbol,
-    ModuleSymbol,
-    NoSymbol,
     NullaryMethodType,
-    Symbol,
     Type,
     TypeRef,
     typeOf
@@ -194,59 +194,97 @@ final class ScalaParser[U <: Universe](universe: U) {
 
   // TODO: resolve from implicit (typeclass)
   private def scalaTypeRef(scalaType: Type, typeParams: Set[String]): ScalaTypeRef = {
-    scalaType.typeSymbol.name.toString match {
-      case "Int" | "Byte" | "Short" =>
-        IntRef
-      case "Long" =>
-        LongRef
-      case "Double" =>
-        DoubleRef
-      case "Boolean" =>
-        BooleanRef
-      case "String" =>
-        StringRef
-      case "List" | "ListSet" | "Set" | "Seq" =>
-        val innerType = scalaType.asInstanceOf[TypeRef].args.head
-        SeqRef(scalaTypeRef(innerType, typeParams))
-      case "Option" =>
-        val innerType = scalaType.asInstanceOf[TypeRef].args.head
-        OptionRef(scalaTypeRef(innerType, typeParams))
-      case "Date" | "Instant" | "LocalDate" | "Timestamp" | "LocalDateTime" | "ZonedDateTime" =>
-        DateRef
-      case typeParam if typeParams.contains(typeParam) =>
-        TypeParamRef(typeParam)
-      case _ if isAnyValChild(scalaType) =>
-        scalaTypeRef(scalaType.members.filter(!_.isMethod).map(_.typeSignature).head, Set())
-      case _ if isCaseClass(scalaType) =>
-        val caseClassName = scalaType.typeSymbol.name.toString
-        val typeArgs = scalaType.asInstanceOf[TypeRef].args
-        val typeArgRefs = typeArgs.map(scalaTypeRef(_, typeParams))
+    if (isOfType(scalaType)(
+      typeOf[Int],
+      typeOf[Byte],
+      typeOf[Short]
+    )) {
+      IntRef
+    } else if (isOfType(scalaType)(
+      typeOf[Long]
+    )) {
+      LongRef
+    } else if (isOfType(scalaType)(
+      typeOf[Double]
+    )) {
+      DoubleRef
+    } else if (isOfType(scalaType)(
+      typeOf[Boolean]
+    )) {
+      BooleanRef
+    } else if (isOfType(scalaType)(
+      typeOf[String]
+    )) {
+      StringRef
+    } else if (isOfType(scalaType)(
+      typeOf[List.type],
+      typeOf[Seq.type],
+      typeOf[ListSet.type],
+      typeOf[Set.type]
+    )) {
+      val innerType = scalaType.asInstanceOf[TypeRef].args.head
+      SeqRef(scalaTypeRef(innerType, typeParams))
+    } else if (isOfType(scalaType)(
+      typeOf[Option.type]
+    )) {
+      val innerType = scalaType.asInstanceOf[TypeRef].args.head
+      OptionRef(scalaTypeRef(innerType, typeParams))
+    } else if (isOfType(scalaType)(
+      typeOf[Date],
+      typeOf[Instant],
+      typeOf[LocalDate],
+      typeOf[LocalTime],
+      typeOf[Timestamp],
+      typeOf[LocalDateTime],
+      typeOf[ZonedDateTime],
+      typeOf[OffsetDateTime]
+    )) {
+      DateRef
+    } else if (typeParams.contains(scalaType.typeSymbol.name.toString)) {
+      TypeParamRef(scalaType.typeSymbol.name.toString)
+    } else if (isAnyValChild(scalaType)) {
+      scalaTypeRef(scalaType.members.filter(!_.isMethod).map(_.typeSignature).head, Set())
+    } else if (isCaseClass(scalaType)) {
+      val caseClassName = scalaType.typeSymbol.name.toString
+      val typeArgs = scalaType.asInstanceOf[TypeRef].args
+      val typeArgRefs = typeArgs.map(scalaTypeRef(_, typeParams))
 
-        CaseClassRef(caseClassName, ListSet.empty ++ typeArgRefs)
+      CaseClassRef(caseClassName, ListSet.empty ++ typeArgRefs)
+    } else if (isOfType(scalaType)(
+      typeOf[Either.type]
+    )) {
+      val innerTypeL = scalaType.asInstanceOf[TypeRef].args.head
+      val innerTypeR = scalaType.asInstanceOf[TypeRef].args.last
 
-      case "Either" => {
-        val innerTypeL = scalaType.asInstanceOf[TypeRef].args.head
-        val innerTypeR = scalaType.asInstanceOf[TypeRef].args.last
-
-        UnionRef(ListSet(
-          scalaTypeRef(innerTypeL, typeParams),
-          scalaTypeRef(innerTypeR, typeParams)))
-      }
-
-      case "Map" =>
-        val keyType = scalaType.asInstanceOf[TypeRef].args.head
-        val valueType = scalaType.asInstanceOf[TypeRef].args.last
-        MapRef(scalaTypeRef(keyType, typeParams), scalaTypeRef(valueType, typeParams))
-      case unknown =>
-        //println(s"type ref $typeName umkown")
-        UnknownTypeRef(unknown)
+      UnionRef(ListSet(
+        scalaTypeRef(innerTypeL, typeParams),
+        scalaTypeRef(innerTypeR, typeParams)))
+    } else if (isOfType(scalaType)(
+      typeOf[Map.type]
+    )) {
+      val keyType = scalaType.asInstanceOf[TypeRef].args.head
+      val valueType = scalaType.asInstanceOf[TypeRef].args.last
+      MapRef(scalaTypeRef(keyType, typeParams), scalaTypeRef(valueType, typeParams))
+    } else if (isOfSubType(scalaType)(
+      typeOf[Enumeration],
+      typeOf[EnumEntry]
+    )) {
+      EnumRef(scalaType.typeSymbol.name.toString)
+    } else {
+      UnknownTypeRef(scalaType.typeSymbol.name.toString)
     }
   }
 
-  @inline private def isCaseClass(scalaType: Type): Boolean =
+  private def isOfType(tpe: Type)(types: Type*): Boolean =
+    types.exists(_ =:= tpe)
+
+  private def isOfSubType(tpe: Type)(subtypes: Type*): Boolean =
+    subtypes.exists(t => tpe <:< t)
+
+  private def isCaseClass(scalaType: Type): Boolean =
     scalaType.typeSymbol.isClass && scalaType.typeSymbol.asClass.isCaseClass
 
-  @inline private def isAnyValChild(scalaType: Type): Boolean =
+  private def isAnyValChild(scalaType: Type): Boolean =
     scalaType <:< typeOf[AnyVal]
 
 }

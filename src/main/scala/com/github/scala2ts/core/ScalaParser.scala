@@ -192,8 +192,13 @@ final class ScalaParser[U <: Universe](universe: U) {
     case _ => parsed
   }
 
-  // TODO: resolve from implicit (typeclass)
+  /**
+   * It looks like you can't call typeOf on existentials or you'll throw
+   * some generic reflection error, instead plug with Any
+   * @see https://github.com/sksamuel/scapegoat/pull/163/files
+   */
   private def scalaTypeRef(scalaType: Type, typeParams: Set[String]): ScalaTypeRef = {
+    System.out.println(scalaType.typeSymbol.name.toString)
     if (isOfType(scalaType)(
       typeOf[Int],
       typeOf[Byte],
@@ -216,17 +221,18 @@ final class ScalaParser[U <: Universe](universe: U) {
       typeOf[String]
     )) {
       StringRef
-    } else if (isOfType(scalaType)(
-      typeOf[List.type],
-      typeOf[Seq.type],
-      typeOf[ListSet.type],
-      typeOf[Set.type]
+    } else if (isOfSubType(scalaType)(
+      typeOf[List[Any]],
+      typeOf[Seq[Any]],
+      typeOf[ListSet[Any]],
+      typeOf[Set[Any]]
     )) {
       val innerType = scalaType.asInstanceOf[TypeRef].args.head
       SeqRef(scalaTypeRef(innerType, typeParams))
-    } else if (isOfType(scalaType)(
-      typeOf[Option.type]
+    } else if (isOfSubType(scalaType)(
+      typeOf[Option[Any]]
     )) {
+      System.out.println("Got option")
       val innerType = scalaType.asInstanceOf[TypeRef].args.head
       OptionRef(scalaTypeRef(innerType, typeParams))
     } else if (isOfType(scalaType)(
@@ -250,8 +256,8 @@ final class ScalaParser[U <: Universe](universe: U) {
       val typeArgRefs = typeArgs.map(scalaTypeRef(_, typeParams))
 
       CaseClassRef(caseClassName, ListSet.empty ++ typeArgRefs)
-    } else if (isOfType(scalaType)(
-      typeOf[Either.type]
+    } else if (isOfSubType(scalaType)(
+      typeOf[Either[Any, Any]]
     )) {
       val innerTypeL = scalaType.asInstanceOf[TypeRef].args.head
       val innerTypeR = scalaType.asInstanceOf[TypeRef].args.last
@@ -259,8 +265,8 @@ final class ScalaParser[U <: Universe](universe: U) {
       UnionRef(ListSet(
         scalaTypeRef(innerTypeL, typeParams),
         scalaTypeRef(innerTypeR, typeParams)))
-    } else if (isOfType(scalaType)(
-      typeOf[Map.type]
+    } else if (isOfSubType(scalaType)(
+      typeOf[Map[Any, Any]]
     )) {
       val keyType = scalaType.asInstanceOf[TypeRef].args.head
       val valueType = scalaType.asInstanceOf[TypeRef].args.last
@@ -276,7 +282,7 @@ final class ScalaParser[U <: Universe](universe: U) {
   }
 
   private def isOfType(tpe: Type)(types: Type*): Boolean =
-    types.exists(_ =:= tpe)
+    types.exists(t => tpe =:= t)
 
   private def isOfSubType(tpe: Type)(subtypes: Type*): Boolean =
     subtypes.exists(t => tpe <:< t)

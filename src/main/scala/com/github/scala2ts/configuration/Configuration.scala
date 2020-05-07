@@ -12,7 +12,7 @@ case class Configuration(
   dateMapping: DateMapping = DateMapping.AsDate,
   longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString,
   outDir: Option[String] = None,
-  outFileName: String = "index.d.ts",
+  outFileName: String = "index.ts",
   packageJson: PackageJson = PackageJson()
 ) {
   import Configuration.Args._

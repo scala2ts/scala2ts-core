@@ -33,7 +33,7 @@ object Renderer {
   }
 
   private[this] def makeEnum(enum: EnumerationDeclaration): String =
-    s"""export const enum ${enum.name} {
+    s"""export enum ${enum.name} {
        |  ${enum.values.map(e => s"$e = '$e'").mkString(",\n  ")}
        |}""".stripMargin
 

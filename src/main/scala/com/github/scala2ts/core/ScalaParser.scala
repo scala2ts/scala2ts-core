@@ -198,7 +198,6 @@ final class ScalaParser[U <: Universe](universe: U) {
    * @see https://github.com/sksamuel/scapegoat/pull/163/files
    */
   private def scalaTypeRef(scalaType: Type, typeParams: Set[String]): ScalaTypeRef = {
-    System.out.println(scalaType.typeSymbol.name.toString)
     if (isOfType(scalaType)(
       typeOf[Int],
       typeOf[Byte],
@@ -232,7 +231,6 @@ final class ScalaParser[U <: Universe](universe: U) {
     } else if (isOfSubType(scalaType)(
       typeOf[Option[Any]]
     )) {
-      System.out.println("Got option")
       val innerType = scalaType.asInstanceOf[TypeRef].args.head
       OptionRef(scalaTypeRef(innerType, typeParams))
     } else if (isOfType(scalaType)(

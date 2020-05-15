@@ -4,13 +4,16 @@ import java.sql.Timestamp
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, ZonedDateTime}
 import java.util.Date
 
-import enumeratum.EnumEntry
+import enumeratum._
 
 import scala.collection.immutable.ListSet
 import scala.reflect.api.Universe
 
 final class ScalaParser[U <: Universe](universe: U) {
-  import com.github.scala2ts.model.Scala.{TypeRef => ScalaTypeRef, _}
+  import com.github.scala2ts.model.Scala.{
+    TypeRef => ScalaTypeRef,
+    _
+  }
   import universe.{
     MethodSymbol,
     NullaryMethodType,
@@ -40,7 +43,7 @@ final class ScalaParser[U <: Universe](universe: U) {
       ) || (
         tpe.typeSymbol.asClass.isAbstract &&
         tpe.typeSymbol.asClass.isSealed
-      )) && tpe <:< typeOf[EnumEntry]
+      )) && inTypeChain(tpe)(typeOf[EnumEntry])
     ) => parseEnumerationEnum(tpe)
 
     case _ if (
@@ -284,6 +287,13 @@ final class ScalaParser[U <: Universe](universe: U) {
 
   private def isOfSubType(tpe: Type)(subtypes: Type*): Boolean =
     subtypes.exists(t => tpe <:< t)
+
+  private def inTypeChain(tpe: Type)(subtypes: Type*): Boolean =
+    tpe.baseClasses.exists { t =>
+      subtypes.exists { st =>
+        t.asClass.typeSignature <:< st.typeSymbol.asClass.typeSignature
+      }
+    }
 
   private def isCaseClass(scalaType: Type): Boolean =
     scalaType.typeSymbol.isClass && scalaType.typeSymbol.asClass.isCaseClass

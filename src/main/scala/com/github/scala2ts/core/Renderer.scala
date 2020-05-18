@@ -3,9 +3,8 @@ package com.github.scala2ts.core
 import java.time.OffsetDateTime
 
 import com.github.scala2ts.BuildInfo._
-import com.github.scala2ts.configuration.Configuration
+import com.github.scala2ts.configuration.{Configuration, SealedTypesMapping}
 import com.github.scala2ts.model.Typescript._
-
 import Internals.list
 
 import scala.collection.immutable.ListSet
@@ -15,7 +14,7 @@ object Renderer {
   def apply(config: Configuration, decls: ListSet[Declaration]): String =
     s"""${makeHeadline}
        |
-       |${decls.map(makeDeclaration).filter(_.nonEmpty).mkString("\n\n")}
+       |${decls.map(makeDeclaration(config)).filter(_.nonEmpty).mkString("\n\n")}
        |""".stripMargin
 
   private[this] def makeHeadline: String =
@@ -25,10 +24,11 @@ object Renderer {
        | * Created at ${OffsetDateTime.now()}
        | */""".stripMargin
 
-  private[this] def makeDeclaration(decl: Declaration): String = decl match {
+  private[this] def makeDeclaration(config: Configuration)(decl: Declaration): String = decl match {
     case enum: EnumerationDeclaration => makeEnum(enum)
     case iface: InterfaceDeclaration => makeInterface(iface)
     case union: UnionDeclaration => makeUnion(union)
+    case tpeUnion: TypeUnionDeclaration => makeTypeUnion(tpeUnion, config)
     case _ => ""
   }
 
@@ -43,6 +43,11 @@ object Renderer {
       s"""export interface ${union.name}${makeSuper(union.superInterface)} {
           |  ${list(union.fields).map(makeField).mkString("\n  ")}
           |}""".stripMargin
+
+  private[this] def makeTypeUnion(tpeUnion: TypeUnionDeclaration, config: Configuration): String =
+    s"""export type ${tpeUnion.name} =
+       |  ${tpeUnion.values.map(makeTypeUnionItem(config)).mkString(" |\n  ")} ;
+       |""".stripMargin
 
   private[this] def makeInterface(interface: InterfaceDeclaration): String =
     if (interface.fields.isEmpty) s"export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface)} { }"
@@ -84,5 +89,11 @@ object Renderer {
   private[this] def makeTypeArgs(args: ListSet[String]): String = {
     if (args.isEmpty) ""
     else s"<${args.mkString(", ")}>"
+  }
+
+  private[this] def makeTypeUnionItem(config: Configuration)(name: String): String = {
+    if (config.sealedTypesMapping == SealedTypesMapping.AsUnionString) {
+      s"'$name'"
+    } else { name }
   }
 }

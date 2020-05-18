@@ -50,6 +50,11 @@ object Typescript {
     values: ListSet[String]
   ) extends Declaration
 
+  case class TypeUnionDeclaration(
+    name: String,
+    values: ListSet[String]
+  ) extends Declaration
+
   case class ClassConstructor(parameters: ListSet[ClassConstructorParameter])
 
   case class ClassConstructorParameter(

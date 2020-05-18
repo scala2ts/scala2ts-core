@@ -74,7 +74,7 @@ final class ScalaParser[U <: Universe](universe: U) {
           val declaring = o.owner.fullName
 
           !declaring.startsWith("java.") &&
-            !declaring.startsWith("scala.")
+          !declaring.startsWith("scala.")
         }) => Some(m)
 
       case _ => None

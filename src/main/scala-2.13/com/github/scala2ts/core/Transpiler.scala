@@ -1,6 +1,6 @@
 package com.github.scala2ts.core
 
-import com.github.scala2ts.configuration.{Configuration, DateMapping, LongDoubleMapping}
+import com.github.scala2ts.configuration.{Configuration, DateMapping, LongDoubleMapping, SealedTypesMapping}
 import com.github.scala2ts.model.Typescript._
 import com.github.scala2ts.model.{Scala, Typescript}
 
@@ -42,6 +42,18 @@ final class Transpiler(config: Configuration) {
           superInterface
         )
 
+        val assocSealedTypeDecl = config.sealedTypesMapping match {
+          case SealedTypesMapping.AsEnum => ListSet(EnumerationDeclaration(
+            s"${buildInterfaceName(name)}Types",
+            possibilities.map(p => buildInterfaceName(p.name))
+          ))
+          case SealedTypesMapping.AsUnion | SealedTypesMapping.AsUnionString => ListSet(TypeUnionDeclaration(
+            s"${buildInterfaceName(name)}Types",
+            possibilities.map(p => buildInterfaceName(p.name))
+          ))
+          case _ => ListSet.empty
+        }
+
         apply(possibilities, Some(unionRef)) + UnionDeclaration(
           name,
           iFaceFields,
@@ -56,7 +68,7 @@ final class Transpiler(config: Configuration) {
               CustomTypeRef(buildInterfaceName(m.name), ListSet.empty)
           },
           superInterface
-        )
+        ) ++ assocSealedTypeDecl
       case _ => ListSet.empty
     }
 

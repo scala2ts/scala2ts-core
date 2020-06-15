@@ -2,6 +2,7 @@ package com.github.scala2ts.configuration
 
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.github.scala2ts.configuration.RenderAs.RenderAs
 import com.github.scala2ts.configuration.SealedTypesMapping.SealedTypesMapping
 
 case class Configuration(
@@ -13,7 +14,7 @@ case class Configuration(
   dateMapping: DateMapping = DateMapping.AsDate,
   longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString,
   sealedTypesMapping: SealedTypesMapping = SealedTypesMapping.None,
-  includeClassDefinition: Boolean = false,
+  renderAs: RenderAs = RenderAs.Interface,
   includeDiscriminator: Boolean = false,
   discriminatorName: String = "type",
   outDir: Option[String] = None,
@@ -72,9 +73,9 @@ case class Configuration(
         config.copy(
           sealedTypesMapping = SealedTypesMapping.withName(argValue(option, sealedTypesArg))
         )
-      case (config, option) if option.startsWith(includeClassArg) =>
+      case (config, option) if option.startsWith(renderAsArg) =>
         config.copy(
-          includeClassDefinition = argValue(option, includeClassArg) == "true"
+          renderAs = RenderAs.withName(argValue(option, renderAsArg))
         )
       case (config, option) if option.startsWith(includeDiscriminatorArg) =>
         config.copy(
@@ -149,8 +150,8 @@ object Configuration {
       argBuilder("longDouble")
     lazy val sealedTypesArg: String =
       argBuilder("sealedTypes")
-    lazy val includeClassArg: String =
-      argBuilder("includeClass")
+    lazy val renderAsArg: String =
+      argBuilder("renderAs")
     lazy val includeDiscriminatorArg: String =
       argBuilder("includeDiscriminator")
     lazy val discriminatorNameArg: String =

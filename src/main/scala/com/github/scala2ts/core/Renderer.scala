@@ -26,7 +26,12 @@ object Renderer {
 
   private[this] def makeDeclaration(config: Configuration)(decl: Declaration): String = decl match {
     case enum: EnumerationDeclaration => makeEnum(enum)
-    case iface: InterfaceDeclaration => makeInterface(iface)
+    case iface: InterfaceDeclaration =>
+      if (config.includeClassDefinition) {
+        s"${makeInterface(iface)}\n${makeClass(config, iface)}"
+      } else {
+        makeInterface(iface)
+      }
     case union: UnionDeclaration => makeUnion(union)
     case tpeUnion: TypeUnionDeclaration => makeTypeUnion(tpeUnion, config)
     case _ => ""
@@ -41,30 +46,43 @@ object Renderer {
     if (union.fields.isEmpty) s"export interface ${union.name}${makeSuper(union.superInterface)} { }"
     else
       s"""export interface ${union.name}${makeSuper(union.superInterface)} {
-          |  ${list(union.fields).map(makeField).mkString("\n  ")}
+          |  ${list(union.fields).map(makeField(_)).mkString("\n\t")}
           |}""".stripMargin
 
   private[this] def makeTypeUnion(tpeUnion: TypeUnionDeclaration, config: Configuration): String =
     s"""export type ${tpeUnion.name} =
-       |  ${tpeUnion.values.map(makeTypeUnionItem(config)).mkString(" |\n  ")} ;
+       |  ${tpeUnion.values.map(makeTypeUnionItem(config)).mkString(" |\n\t")} ;
        |""".stripMargin
 
   private[this] def makeInterface(interface: InterfaceDeclaration): String =
     if (interface.fields.isEmpty) s"export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface)} { }"
     else
       s"""export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface)} {
-         |  ${list(interface.fields).map(makeField).mkString("\n  ")}
+         |  ${list(interface.fields).map(makeField(_)).mkString("\n\t")}
          |}""".stripMargin
 
-  private[this] def makeField(member: Member): String = member.typeRef match {
+  private[this] def makeClass(config: Configuration, interface: InterfaceDeclaration): String =
+    if (interface.fields.isEmpty)  s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)} implements ${interface.name}${makeTypeArgs(interface.typeParams)} {
+                                      |  ${if (config.includeDiscriminator) s"private ${config.discriminatorName}: string = this.constructor.name;" else ""}
+                                      |  constructor() { }
+                                      |}""".stripMargin
+    else
+      s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)} implements ${interface.name}${makeTypeArgs(interface.typeParams)} {
+         |  ${if (config.includeDiscriminator) s"private ${config.discriminatorName}: string = this.constructor.name;" else ""}
+         |  constructor(
+         |    ${list(interface.fields).sortBy(_.typeRef.isInstanceOf[OptionRef]).map(makeField(_, ",")).mkString("\n\t\t")}
+         |  ) { }
+         |}""".stripMargin
+
+  private[this] def makeField(member: Member, delimiter: String = ";"): String = member.typeRef match {
     case arr: ArrayRef =>
-      s"${member.name}: Array<${makeType(arr.innerType)}>;"
+      s"${member.name}: Array<${makeType(arr.innerType)}>$delimiter"
     case option: OptionRef =>
-      s"${member.name}?: ${makeType(option.typeRef)};"
+      s"${member.name}?: ${makeType(option.typeRef)}$delimiter"
     case other: CustomTypeRef =>
-      s"${member.name}: ${other.name}${makeTypeArgs(other.typeArgs.map(makeType))};"
+      s"${member.name}: ${other.name}${makeTypeArgs(other.typeArgs.map(makeType))}$delimiter"
     case _ =>
-      s"${member.name}: ${member.typeRef};"
+      s"${member.name}: ${member.typeRef}$delimiter"
   }
 
   private[this] def makeType(ref: TypeRef): String = ref match {

@@ -1,6 +1,6 @@
 package com.github.scala2ts.core
 
-import com.github.scala2ts.configuration.{Configuration, OptionPickler}
+import com.github.scala2ts.configuration.{Configuration, OptionPickler, TSConfig}
 import com.github.scala2ts.model.Scala.TypeDef
 import com.github.scala2ts.model.Typescript.Declaration
 
@@ -27,6 +27,15 @@ object TypescriptGenerator {
       os.write.over(
         Path(config.outDir.get) / config.outFileName,
         output,
+        createFolders = true
+      )
+
+      os.write.over(
+        Path(config.outDir.get) / "tsconfig.json",
+        OptionPickler.write(TSConfig(Map(
+          "target" -> "es6",
+          "module" -> "commonjs"
+        )), 2),
         createFolders = true
       )
 

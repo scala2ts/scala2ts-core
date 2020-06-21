@@ -2,8 +2,18 @@ package com.github.scala2ts.configuration
 
 import OptionPickler.{Writer => W, macroW}
 
+case class TSCompilerOptions(
+  target: String,
+  module: String,
+  lib: Seq[String]
+)
+
+object TSCompilerOptions {
+  implicit val rw: W[TSCompilerOptions] = macroW
+}
+
 case class TSConfig(
-  compilerOptions: Map[String, String]
+  compilerOptions: TSCompilerOptions
 )
 
 object TSConfig {

@@ -58,6 +58,9 @@ For ease of use, here is the current list of configuration options and their def
 |Date Mapping|-P:scala2ts:date|no|String|AsDate|How to emit Date types (options: AsDate, AsString, AsNumber)|
 |Long & Double Mapping|-P:scala2ts:longDouble|no|String|AsString|How to emit Long(s) or Double(s) (options: AsString, AsNumber)|
 |Sealed Trait Type Mapping|-P:scala2ts:sealedTypes|no|SealedTypesMapping|None|Emit an enum or type union for a sealed trait/class's members (options: None, AsEnum, AsUnion, AsUnionString)|
+|Render As|-P:scala2ts:renderAs|no|RenderAs|Interface|How to render interfaces/classes|
+|Class Discriminator|-P:scala2ts:includeDiscriminator|no|Boolean|false|Include a class property that acts as a discriminator|
+|Discriminator Name|-P:scala2ts:discriminatorName|no|String|"type"|The name of the class discriminator property|
 |Output Directory|-P:scala2ts:outDir|no|String| |What directory to emit files to|
 |Output File Name|-P:scala2ts:outFileName|no|String|index.d.ts|The name of the outputted Typescript file|
 |package.json Name|-P:scala2ts:pj:name|no|String| |The name to use in package.json. Note: This is the only required field to enable package.json to emit|

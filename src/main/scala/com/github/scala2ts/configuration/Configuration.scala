@@ -2,6 +2,7 @@ package com.github.scala2ts.configuration
 
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.github.scala2ts.configuration.RenderAs.RenderAs
 import com.github.scala2ts.configuration.SealedTypesMapping.SealedTypesMapping
 
 case class Configuration(
@@ -13,6 +14,9 @@ case class Configuration(
   dateMapping: DateMapping = DateMapping.AsDate,
   longDoubleMapping: LongDoubleMapping = LongDoubleMapping.AsString,
   sealedTypesMapping: SealedTypesMapping = SealedTypesMapping.None,
+  renderAs: RenderAs = RenderAs.Interface,
+  includeDiscriminator: Boolean = false,
+  discriminatorName: String = "type",
   outDir: Option[String] = None,
   outFileName: String = "index.ts",
   packageJson: PackageJson = PackageJson()
@@ -68,6 +72,18 @@ case class Configuration(
       case (config, option) if option.startsWith(sealedTypesArg) =>
         config.copy(
           sealedTypesMapping = SealedTypesMapping.withName(argValue(option, sealedTypesArg))
+        )
+      case (config, option) if option.startsWith(renderAsArg) =>
+        config.copy(
+          renderAs = RenderAs.withName(argValue(option, renderAsArg))
+        )
+      case (config, option) if option.startsWith(includeDiscriminatorArg) =>
+        config.copy(
+          includeDiscriminator = argValue(option, includeDiscriminatorArg) == "true"
+        )
+      case (config, option) if option.startsWith(discriminatorNameArg) =>
+        config.copy(
+          discriminatorName = argValue(option, discriminatorNameArg)
         )
       case (config, option) if option.startsWith(outDirArg) =>
         config.copy(
@@ -134,6 +150,12 @@ object Configuration {
       argBuilder("longDouble")
     lazy val sealedTypesArg: String =
       argBuilder("sealedTypes")
+    lazy val renderAsArg: String =
+      argBuilder("renderAs")
+    lazy val includeDiscriminatorArg: String =
+      argBuilder("includeDiscriminator")
+    lazy val discriminatorNameArg: String =
+      argBuilder("discriminatorName")
     lazy val outDirArg: String =
       argBuilder("outDir")
     lazy val outFileNameArg: String =

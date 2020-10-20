@@ -18,9 +18,8 @@ object TypescriptGenerator {
       new ScalaParser[universe.type](universe)
     val transpiler: Transpiler = new Transpiler(config)
 
-    val parsedTypes: ListSet[TypeDef] = parser.parseTypes(types)
+    val parsedTypes: ListSet[TypeDef] = parser.parseTypes(types, Option.empty)
     val tsTypes: ListSet[Declaration] = transpiler(parsedTypes)
-
     val output: String = Renderer(config, tsTypes)
 
     if (config.outDir.nonEmpty) {

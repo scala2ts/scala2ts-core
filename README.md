@@ -20,6 +20,7 @@ more complex build configuration, proceed below.
 
 |**Version**|**Scala**|
 |---|---|
+|1.1.x|2.13<br />2.12<br />2.11|
 |1.0.x|2.13<br />2.12<br />2.11|
 
 ## Usage

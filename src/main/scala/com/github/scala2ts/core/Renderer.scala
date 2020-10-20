@@ -27,7 +27,7 @@ object Renderer {
   private[this] def makeDeclaration(config: Configuration)(decl: Declaration): String = decl match {
     case enum: EnumerationDeclaration => makeEnum(enum)
     case iface: InterfaceDeclaration =>
-      if (config.renderAs == RenderAs.Class) {
+      if (config.renderAs == RenderAs.Class && !iface.isTrait) {
         makeClass(config, iface)
       } else {
         makeInterface(iface)
@@ -55,23 +55,23 @@ object Renderer {
        |""".stripMargin
 
   private[this] def makeInterface(interface: InterfaceDeclaration): String =
-    if (interface.fields.isEmpty) s"export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface)} { }"
+    if (interface.fields.isEmpty) s"export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface ++ interface.traits, "implements")} { }"
     else
       s"""export interface ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface)} {
          |  ${list(interface.fields).map(makeField(_)).mkString("\n\t")}
          |}""".stripMargin
 
   private[this] def makeClass(config: Configuration, interface: InterfaceDeclaration): String =
-    if (interface.fields.isEmpty)  s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface, "implements")} {
+    if (interface.fields.isEmpty)  s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface ++ interface.traits, "implements")} {
                                       |  ${if (config.includeDiscriminator) s"private ${config.discriminatorName}: string = this.constructor.name;" else ""}
-                                      |  constructor() { }
+                                      |  constructor() {  }
                                       |}""".stripMargin
     else
-      s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface, "implements")} {
+      s"""export class ${interface.name}${makeTypeArgs(interface.typeParams)}${makeSuper(interface.superInterface ++ interface.traits, "implements")} {
          |  ${if (config.includeDiscriminator) s"private ${config.discriminatorName}: string = this.constructor.name;" else ""}
          |  constructor(
          |    ${list(interface.fields).sortBy(_.typeRef.isInstanceOf[OptionRef]).map(makeField(_, ",", Some("public"))).mkString("\n\t\t")}
-         |  ) { }
+         |  ) {  }
          |}""".stripMargin
 
   private[this] def makeField(member: Member, terminator: String = ";", scope: Option[String] = None): String =
@@ -101,9 +101,9 @@ object Renderer {
     case _ => ref.toString
   }
 
-  private[this] def makeSuper(superInterface: Option[InterfaceDeclaration], verb: String = "extends"): String =
+  private[this] def makeSuper(superInterface: List[InterfaceDeclaration], verb: String = "extends"): String =
     if (superInterface.isEmpty) ""
-    else s" $verb ${superInterface.get.name}"
+    else s" $verb ${superInterface.map(_.name).mkString(", ")}"
 
   private[this] def makeTypeArgs(args: ListSet[String]): String = {
     if (args.isEmpty) ""

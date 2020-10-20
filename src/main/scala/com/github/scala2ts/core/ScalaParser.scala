@@ -22,18 +22,21 @@ final class ScalaParser[U <: Universe](universe: U) {
     typeOf
   }
 
-  def parseTypes(types: List[Type]): ListSet[TypeDef] =
+  def parseTypes(types: List[Type], owner: Option[TypeDef]): ListSet[TypeDef] =
     parse(
       types,
       ListSet.empty[Type],
-      ListSet.empty[TypeDef]
+      ListSet.empty[TypeDef],
+      owner
     )
 
-  private def parseType(tpe: Type): Option[TypeDef] = tpe match {
+  private def parseType(tpe: Type, owner: Option[TypeDef] = None): List[TypeDef] = tpe match {
     case _ if (
       (tpe.getClass.getName contains "ModuleType") &&
       tpe <:< typeOf[Enumeration]
     ) => parseScalaEnum(tpe)
+        .map(List(_))
+        .getOrElse(List.empty)
 
     case _ if (
       tpe.typeSymbol.isClass &&
@@ -45,6 +48,8 @@ final class ScalaParser[U <: Universe](universe: U) {
         tpe.typeSymbol.asClass.isSealed
       )) && inTypeChain(tpe)(typeOf[EnumEntry])
     ) => parseEnumerationEnum(tpe)
+        .map(List(_))
+        .getOrElse(List.empty)
 
     case _ if (
       tpe.typeSymbol.isClass &&
@@ -57,9 +62,9 @@ final class ScalaParser[U <: Universe](universe: U) {
       tpe.typeSymbol.isClass &&
       isCaseClass(tpe) &&
       !isAnyValChild(tpe)
-    ) => parseCaseClass(tpe)
+    ) => parseCaseClass(tpe, owner)
 
-    case _ => Option.empty[TypeDef]
+    case _ => List.empty
   }
 
   private object Field {
@@ -73,8 +78,8 @@ final class ScalaParser[U <: Universe](universe: U) {
         m.overrides.forall { o =>
           val declaring = o.owner.fullName
 
-          !declaring.startsWith("java.") &&
-          !declaring.startsWith("scala.")
+          !declaring.startsWith("java") &&
+          !declaring.startsWith("scala")
         }) => Some(m)
 
       case _ => None
@@ -100,20 +105,55 @@ final class ScalaParser[U <: Universe](universe: U) {
     ))
   }
 
-  private def parseSealedUnion(tpe: Type): Option[SealedUnion] = {
+  private def parseSealedUnion(tpe: Type): List[SealedUnion] = {
     val members = tpe.decls.collect {
-      case m: MethodSymbol if (m.isAbstract && m.isPublic && !m.isImplicit &&
-        !m.name.toString.endsWith("$")) => member(m, List.empty)
+      case m: MethodSymbol if (
+          m.isAbstract &&
+          m.isPublic &&
+          m.paramLists.forall(_.isEmpty) &&
+          !m.isImplicit &&
+          !m.name.toString.endsWith("$")
+        ) => member(m, List.empty)
     }
 
-    Some(SealedUnion(
+    val subclasses = parseTypes(
+      tpe
+        .typeSymbol
+        .asClass
+        .knownDirectSubclasses
+        .map(_.typeSignature)
+        .toList,
+      Option(OwnerDef(tpe.typeSymbol.name.toString))
+    )
+
+    subclasses.collect({ case su: SealedUnion => su }).toList :+ SealedUnion(
       tpe.typeSymbol.name.toString,
       ListSet.empty ++ members,
-      parseTypes(tpe.typeSymbol.asClass.knownDirectSubclasses.map(_.typeSignature).toList)
+      subclasses.filterNot(_.isInstanceOf[SealedUnion])
+    )
+  }
+
+  private def parseTrait(tpe: Type): Option[Trait] = {
+    val members = tpe.decls.collect {
+      case m: MethodSymbol if (
+          m.isAbstract &&
+          m.isPublic &&
+          m.paramLists.forall(_.isEmpty) &&
+          !m.isImplicit &&
+          !m.name.toString.endsWith("$")
+        ) => member(m, List.empty)
+    }
+
+    Some(Trait(
+      tpe.typeSymbol.name.toString,
+      ListSet.empty ++ members
     ))
   }
 
-  private def parseCaseClass(caseClassType: Type): Option[CaseClass] = {
+  private def parseCaseClass(
+    caseClassType: Type,
+    owner: Option[TypeDef]
+  ): List[TypeDef] = {
     val typeParams = caseClassType
       .typeConstructor
       .dealias
@@ -131,12 +171,24 @@ final class ScalaParser[U <: Universe](universe: U) {
         member(m, typeParams)
     }.filterNot(members.contains)
 
-    Some(CaseClass(
+    val traits = caseClassType.baseClasses.filterNot(c => (
+      c.typeSignature.typeSymbol.owner.fullName.startsWith("scala") ||
+      c.typeSignature.typeSymbol.owner.fullName.startsWith("java")
+    )).map(_.asClass).collect {
+      case c if (
+        c.isTrait &&
+        !owner.fold(false)(_.name.equals(c.typeSignature.typeSymbol.name.toString))
+      ) => parseTrait(c.typeSignature)
+    }.collect { case Some(t) => t }
+
+    List(CaseClass(
       caseClassType.typeSymbol.name.toString,
       ListSet.empty ++ members,
       ListSet.empty ++ values,
-      ListSet.empty ++ typeParams
-    ))
+      ListSet.empty ++ typeParams,
+      ListSet.empty ++ traits,
+      owner
+    )) ++ traits
   }
 
   @inline private def member(
@@ -149,11 +201,11 @@ final class ScalaParser[U <: Universe](universe: U) {
       typeParams.toSet
     ))
 
-  @annotation.tailrec
   private def parse(
     types: List[Type],
     examined: ListSet[Type],
-    parsed: ListSet[TypeDef]
+    parsed: ListSet[TypeDef],
+    owner: Option[TypeDef]
   ): ListSet[TypeDef] = types match {
     case scalaType :: tail =>
       if (
@@ -179,16 +231,22 @@ final class ScalaParser[U <: Universe](universe: U) {
         }
 
         parse(
-          memberTypes ++: typeArgs ++: tail,
+          List.empty ++ memberTypes ++ typeArgs,
           examined + scalaType,
-          parsed ++ parseType(scalaType)
+          parsed,
+          Option.empty
+        ) ++ parse(
+          tail,
+          examined + scalaType,
+          parsed ++ parseType(scalaType, owner),
+          owner
         )
-
       } else {
         parse(
           tail,
           examined + scalaType,
-          parsed ++ parseType(scalaType)
+          parsed ++ parseType(scalaType, owner),
+          owner
         )
       }
 
@@ -256,7 +314,10 @@ final class ScalaParser[U <: Universe](universe: U) {
       val typeArgs = scalaType.asInstanceOf[TypeRef].args
       val typeArgRefs = typeArgs.map(scalaTypeRef(_, typeParams))
 
-      CaseClassRef(caseClassName, ListSet.empty ++ typeArgRefs)
+      CaseClassRef(
+        caseClassName,
+        ListSet.empty ++ typeArgRefs
+      )
     } else if (isOfSubType(scalaType)(
       typeOf[Either[Any, Any]]
     )) {

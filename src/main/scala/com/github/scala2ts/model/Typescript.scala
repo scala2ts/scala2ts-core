@@ -18,7 +18,9 @@ object Typescript {
     name: String,
     fields: ListSet[Member],
     typeParams: ListSet[String],
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration],
+    traits: ListSet[InterfaceDeclaration],
+    isTrait: Boolean
   ) extends Declaration
   // TODO: Support mapping of typeParams with superInterface
 
@@ -29,20 +31,21 @@ object Typescript {
     constructor: ClassConstructor,
     values: ListSet[Member],
     typeParams: ListSet[String],
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration],
+    traits: ListSet[InterfaceDeclaration]
   ) extends Declaration
 
   case class SingletonDeclaration(
     name: String,
     values: ListSet[Member],
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration]
   ) extends Declaration
 
   case class UnionDeclaration(
     name: String,
     fields: ListSet[Member],
     possibilities: ListSet[CustomTypeRef],
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration]
   ) extends Declaration
 
   case class EnumerationDeclaration(

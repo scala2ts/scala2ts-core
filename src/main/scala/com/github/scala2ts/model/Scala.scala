@@ -7,11 +7,18 @@ object Scala {
     def name: String
   }
 
+  case class Trait(
+    name: String,
+    fields: ListSet[TypeMember]
+  ) extends TypeDef
+
   case class CaseClass(
     name: String,
     fields: ListSet[TypeMember],
     values: ListSet[TypeMember],
-    typeArgs: ListSet[String]
+    typeArgs: ListSet[String],
+    traits: ListSet[Trait],
+    owner: Option[TypeDef]
   ) extends TypeDef
 
   case class CaseObject(
@@ -35,6 +42,10 @@ object Scala {
     values: ListSet[String]
   ) extends TypeDef
 
+  case class OwnerDef(
+    name: String
+  ) extends TypeDef
+
   sealed trait TypeRef
 
   case class OptionRef(innerType: TypeRef) extends TypeRef
@@ -43,7 +54,10 @@ object Scala {
 
   case class MapRef(keyType: TypeRef, valueType: TypeRef) extends TypeRef
 
-  case class CaseClassRef(name: String, typeArgs: ListSet[TypeRef]) extends TypeRef
+  case class CaseClassRef(
+    name: String,
+    typeArgs: ListSet[TypeRef]
+  ) extends TypeRef
 
   case class EnumRef(name: String) extends TypeRef
 

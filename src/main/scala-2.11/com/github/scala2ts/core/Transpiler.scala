@@ -8,11 +8,11 @@ import scala.collection.immutable.ListSet
 
 final class Transpiler(config: Configuration) {
   @inline def apply(scalaTypes: ListSet[Scala.TypeDef]): ListSet[Declaration] =
-    apply(scalaTypes, superInterface = None)
+    apply(scalaTypes, superInterface = List.empty)
 
   def apply(
     scalaTypes: ListSet[Scala.TypeDef],
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration]
   ): ListSet[Declaration] =
     scalaTypes.flatMap[Declaration, ListSet[Declaration]] {
       case Scala.ScalaEnum(name, values) => ListSet(EnumerationDeclaration(
@@ -24,8 +24,14 @@ final class Transpiler(config: Configuration) {
         values
       ))
 
-      case scalaClass: Scala.CaseClass if !withinUnion(scalaTypes, scalaClass) =>
-        ListSet(transpileInterface(scalaClass, superInterface))
+      case scalaClass: Scala.CaseClass => {
+        val interface: InterfaceDeclaration = transpileInterface(scalaClass, superInterface)
+        interface.traits + interface
+      }
+
+      case scalaTrait: Scala.Trait => List(
+        transpileTrait(scalaTrait)
+      )
 
       case Scala.SealedUnion(name, fields, possibilities) =>
         val iFaceFields = fields.map { member =>
@@ -39,7 +45,9 @@ final class Transpiler(config: Configuration) {
           buildInterfaceName(name),
           iFaceFields,
           ListSet.empty,
-          superInterface
+          superInterface,
+          ListSet.empty,
+          isTrait = false
         )
 
         val assocSealedTypeDecl = config.sealedTypesMapping match {
@@ -54,27 +62,27 @@ final class Transpiler(config: Configuration) {
           case _ => ListSet.empty
         }
 
-        apply(possibilities, Some(unionRef)) + UnionDeclaration(
+        apply(possibilities, List(unionRef)) + UnionDeclaration(
           name,
           iFaceFields,
           possibilities.map {
             case Scala.CaseObject(nme, _) =>
               CustomTypeRef(buildInterfaceName(nme), ListSet.empty)
 
-            case Scala.CaseClass(n, _, _, tpeArgs) =>
+            case Scala.CaseClass(n, _, _, tpeArgs, _, _) =>
               CustomTypeRef(buildInterfaceName(n), tpeArgs.map(SimpleTypeRef))
 
             case m =>
               CustomTypeRef(buildInterfaceName(m.name), ListSet.empty)
           },
-          superInterface
+          if (superInterface.isEmpty) List(unionRef) else List.empty
         ) ++ assocSealedTypeDecl
       case _ => ListSet.empty
     }
 
   private def transpileInterface(
     scalaClass: Scala.CaseClass,
-    superInterface: Option[InterfaceDeclaration]
+    superInterface: List[InterfaceDeclaration]
   ): InterfaceDeclaration = InterfaceDeclaration(
     buildInterfaceName(scalaClass.name),
     scalaClass.fields.map { scalaMember =>
@@ -83,8 +91,24 @@ final class Transpiler(config: Configuration) {
         transpileTypeRef(scalaMember.typeRef, inInterfaceContext = true))
     },
     typeParams = scalaClass.typeArgs,
-    superInterface = superInterface
+    superInterface = superInterface,
+    scalaClass.traits.map(transpileTrait),
+    isTrait = false
   )
+
+  private def transpileTrait(scalaTrait: Scala.Trait): InterfaceDeclaration =
+    InterfaceDeclaration(
+      buildInterfaceName(scalaTrait.name),
+      scalaTrait.fields.map { member =>
+        Typescript.Member(
+          member.name,
+          transpileTypeRef(member.typeRef, inInterfaceContext = true))
+      },
+      ListSet.empty,
+      List.empty,
+      ListSet.empty,
+      isTrait = true
+    )
 
   private def buildInterfaceName(name: String) =
     s"${config.typeNamePrefix}${name}${config.typeNameSuffix}"

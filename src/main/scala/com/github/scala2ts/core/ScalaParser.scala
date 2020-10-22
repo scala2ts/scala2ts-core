@@ -194,12 +194,14 @@ final class ScalaParser[U <: Universe](universe: U) {
   @inline private def member(
     sym: MethodSymbol,
     typeParams: List[String]
-  ): TypeMember = TypeMember(
-    sym.name.toString,
-    scalaTypeRef(
-      sym.returnType.map(_.dealias),
-      typeParams.toSet
-    ))
+  ): TypeMember = {
+    TypeMember(
+      sym.name.toString,
+      scalaTypeRef(
+        sym.returnType.map(_.dealias),
+        typeParams.toSet
+      ))
+  }
 
   private def parse(
     types: List[Type],
@@ -318,6 +320,8 @@ final class ScalaParser[U <: Universe](universe: U) {
         caseClassName,
         ListSet.empty ++ typeArgRefs
       )
+    } else if (isTrait(scalaType)) {
+      TraitRef(scalaType.typeSymbol.name.toString)
     } else if (isOfSubType(scalaType)(
       typeOf[Either[Any, Any]]
     )) {
@@ -358,6 +362,9 @@ final class ScalaParser[U <: Universe](universe: U) {
 
   private def isCaseClass(scalaType: Type): Boolean =
     scalaType.typeSymbol.isClass && scalaType.typeSymbol.asClass.isCaseClass
+
+  private def isTrait(scalaType: Type): Boolean =
+    scalaType.typeSymbol.isClass && scalaType.typeSymbol.asClass.isTrait
 
   private def isAnyValChild(scalaType: Type): Boolean =
     scalaType <:< typeOf[AnyVal]

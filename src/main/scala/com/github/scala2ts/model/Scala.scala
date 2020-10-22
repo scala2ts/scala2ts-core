@@ -59,6 +59,8 @@ object Scala {
     typeArgs: ListSet[TypeRef]
   ) extends TypeRef
 
+  case class TraitRef(name: String) extends TypeRef
+
   case class EnumRef(name: String) extends TypeRef
 
   case class SeqRef(innerType: TypeRef) extends TypeRef

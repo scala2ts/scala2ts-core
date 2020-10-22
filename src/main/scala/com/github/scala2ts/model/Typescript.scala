@@ -91,6 +91,10 @@ object Typescript {
     override def toString = "undefined"
   }
 
+  case object AnyRef extends TypeRef {
+    override def toString = "any"
+  }
+
   case class SimpleTypeRef(name: String) extends TypeRef {
     override def toString = name
   }

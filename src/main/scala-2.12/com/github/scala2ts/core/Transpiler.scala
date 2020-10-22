@@ -147,6 +147,9 @@ final class Transpiler(config: Configuration) {
       Typescript.CustomTypeRef(
         actualName, typeArgs.map(transpileTypeRef(_, inInterfaceContext)))
 
+    case Scala.TraitRef(name) =>
+      Typescript.SimpleTypeRef(name)
+
     case Scala.DateRef =>
       if (config.dateMapping == DateMapping.AsNumber) {
         Typescript.NumberRef
@@ -174,7 +177,7 @@ final class Transpiler(config: Configuration) {
         transpileTypeRef(i, inInterfaceContext)
       })
 
-    case Scala.UnknownTypeRef(_) =>
-      Typescript.StringRef
+    case Scala.UnknownTypeRef(name) =>
+      Typescript.CustomTypeRef(name, ListSet.empty)
   }
 }

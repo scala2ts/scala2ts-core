@@ -53,11 +53,15 @@ final class Transpiler(config: Configuration) {
         val assocSealedTypeDecl = config.sealedTypesMapping match {
           case SealedTypesMapping.AsEnum => ListSet(EnumerationDeclaration(
             s"${buildInterfaceName(name)}Types",
-            possibilities.map(p => buildInterfaceName(p.name))
+            possibilities.collect {
+              case cc @ Scala.CaseClass(_, _, _, _, _, Some(_)) => cc
+            }.map(p => buildInterfaceName(p.name))
           ))
           case SealedTypesMapping.AsUnion | SealedTypesMapping.AsUnionString => ListSet(TypeUnionDeclaration(
             s"${buildInterfaceName(name)}Types",
-            possibilities.map(p => buildInterfaceName(p.name))
+            possibilities.collect {
+              case cc @ Scala.CaseClass(_, _, _, _, _, Some(_)) => cc
+            }.map(p => buildInterfaceName(p.name))
           ))
           case _ => ListSet.empty
         }
@@ -75,7 +79,7 @@ final class Transpiler(config: Configuration) {
             case m =>
               CustomTypeRef(buildInterfaceName(m.name), ListSet.empty)
           },
-          if (superInterface.isEmpty) List(unionRef) else List.empty
+          List.empty
         ) ++ assocSealedTypeDecl
       case _ => ListSet.empty
     }

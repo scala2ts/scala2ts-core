@@ -83,7 +83,7 @@ object Renderer {
       case other: CustomTypeRef =>
         s"${member.name}: ${other.name}${makeTypeArgs(other.typeArgs.map(makeType))}$terminator"
       case _ =>
-        s"${member.name}: ${member.typeRef}$terminator"
+        s"${member.name}: ${makeType(member.typeRef)}$terminator"
     })
 
   private[this] def makeType(ref: TypeRef): String = ref match {

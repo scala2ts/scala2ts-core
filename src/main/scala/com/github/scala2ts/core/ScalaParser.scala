@@ -291,6 +291,16 @@ final class ScalaParser[U <: Universe](universe: U) {
     )) {
       val innerType = scalaType.asInstanceOf[TypeRef].args.head
       SeqRef(scalaTypeRef(innerType, typeParams))
+    } else if (scalaType.typeSymbol.name.toString == "Map") {
+      val keyType = scalaType.asInstanceOf[TypeRef].args.head
+      val valueType = scalaType.asInstanceOf[TypeRef].args.last
+      MapRef(scalaTypeRef(keyType, typeParams), scalaTypeRef(valueType, typeParams))
+    } else if (scalaType.typeSymbol.name.toString == "Either") {
+      val innerTypeL = scalaType.asInstanceOf[TypeRef].args.head
+      val innerTypeR = scalaType.asInstanceOf[TypeRef].args.last
+      UnionRef(ListSet(
+        scalaTypeRef(innerTypeL, typeParams),
+        scalaTypeRef(innerTypeR, typeParams)))
     } else if (isOfSubType(scalaType)(
       typeOf[Option[Any]]
     )) {
@@ -320,28 +330,13 @@ final class ScalaParser[U <: Universe](universe: U) {
         caseClassName,
         ListSet.empty ++ typeArgRefs
       )
-    } else if (isTrait(scalaType)) {
-      TraitRef(scalaType.typeSymbol.name.toString)
-    } else if (isOfSubType(scalaType)(
-      typeOf[Either[Any, Any]]
-    )) {
-      val innerTypeL = scalaType.asInstanceOf[TypeRef].args.head
-      val innerTypeR = scalaType.asInstanceOf[TypeRef].args.last
-
-      UnionRef(ListSet(
-        scalaTypeRef(innerTypeL, typeParams),
-        scalaTypeRef(innerTypeR, typeParams)))
-    } else if (isOfSubType(scalaType)(
-      typeOf[Map[Any, Any]]
-    )) {
-      val keyType = scalaType.asInstanceOf[TypeRef].args.head
-      val valueType = scalaType.asInstanceOf[TypeRef].args.last
-      MapRef(scalaTypeRef(keyType, typeParams), scalaTypeRef(valueType, typeParams))
     } else if (isOfSubType(scalaType)(
       typeOf[Enumeration],
       typeOf[EnumEntry]
     )) {
       EnumRef(scalaType.typeSymbol.name.toString)
+    } else if (isTrait(scalaType)) {
+      TraitRef(scalaType.typeSymbol.name.toString)
     } else {
       UnknownTypeRef(scalaType.typeSymbol.name.toString)
     }

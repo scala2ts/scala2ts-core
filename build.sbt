@@ -22,7 +22,7 @@ lazy val root = project.in(file("."))
       "org.scala-lang"        %  "scala-reflect"  % scalaVersion.value % "provided",
       "com.beachape"          %% "enumeratum"     % "1.5.15",
       "com.lihaoyi"           %% "os-lib"         % (scalaBinaryVersion.value match {
-        case "2.11" => "0.2.9"
+        case "2.11" => "0.7.8"
         case "2.12" | "2.13" => "0.7.0"
       }),
       "com.lihaoyi"           %% "upickle"        % (scalaBinaryVersion.value match {

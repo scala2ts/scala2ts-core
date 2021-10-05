@@ -26,7 +26,7 @@ lazy val root = project.in(file("."))
         case "2.12" | "2.13" => "0.7.0"
       }),
       "com.lihaoyi"           %% "upickle"        % (scalaBinaryVersion.value match {
-        case "2.11" => "0.7.4"
+        case "2.11" => "1.4.2"
         case "2.12" | "2.13" => "1.1.0"
       })
     ),

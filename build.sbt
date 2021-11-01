@@ -9,7 +9,7 @@ lazy val root = project.in(file("."))
   .settings(
     name := "scala2ts-core",
     organization := "com.github.scala2ts",
-    scalaVersion := "2.13.1",
+    scalaVersion := "2.13.7",
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
       // TODO: "2.10.7"

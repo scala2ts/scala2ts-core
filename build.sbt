@@ -32,16 +32,16 @@ lazy val root = project.in(file("."))
     ),
     buildInfoKeys := Seq(name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "com.github.scala2ts",
-    test in assembly := {},
-    assemblyOption in assembly :=
-      (assemblyOption in assembly).value.copy(includeScala = false),
+    (assembly / test) := {},
+    (assembly / assemblyOption) :=
+      (assembly / assemblyOption).value.copy(includeScala = false),
     /**
      * There's some classpath particularities when executing compiler plugins
      * so we need to make a fatjar
      * @see https://www.scala-lang.org/old/node/6664.html
      * @see https://github.com/sbt/sbt/issues/2255
      */
-    packageBin in Compile := (assembly in Compile).value,
+    (Compile / packageBin) := (Compile / assembly).value,
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
